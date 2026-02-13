@@ -2,79 +2,401 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Календар Ліцей ЕІТ Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Студія Ліцей ЕІТ Online v4.1 Telegram</title>
   <link rel="stylesheet" href="style.css">
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
 </head>
 <body>
 
-  <div id='calendar'></div>
-<div id="modalOverlay" style="display: none;">
-  <div id="eventModal">
-    <h3>Новий запис</h3>
-    <input type="text" id="eventTitle" placeholder="Назва уроку або подкасту">
-    
-    <div style="margin-top: 15px;">
-      <label>Колір:</label>
-      <select id="eventColor">
-        <option value="#28a745">Зелений (Урок)</option>
-        <option value="#3788d8">Синій (Монтаж)</option>
-        <option value="#ff9f89">Персиковий (Подкаст)</option>
-        <option value="#ffc107">Жовтий (Підготовка)</option>
-      </select>
-    </div>
-
-    <div class="modal-buttons">
-      <button id="btnCancel">Скасувати</button>
-      <button id="btnSave">Зберегти</button>
+  <div id="loginScreen">
+    <div class="login-box">
+      <h2>Liceum EIT Online</h2>
+      <input type="password" id="passInput" placeholder="Код доступу">
+      <button class="btn btn-primary" onclick="tryLogin()">Увійти</button>
+      <!-- <p style="font-size: 10px; color: #888; margin-top: 20px;">Tech: 777 | Admin: 888 | Teacher: 999</p> -->
     </div>
   </div>
-</div>
-  <script>
-// Змінна для збереження даних виділення, поки відкрита модалка
-let selectedInfo = null;
 
-// Оновлюємо налаштування календаря всередині FullCalendar.Calendar:
-// ...
-    select: function(info) {
-      selectedInfo = info; // Запам'ятовуємо, який час виділив користувач
-      document.getElementById('modalOverlay').style.display = 'flex'; // Показуємо модалку
-      document.getElementById('eventTitle').value = ''; // Очищуємо поле
-      document.getElementById('eventTitle').focus();
-    },
-// ...
+  <div id="topBar" style="display: none;">
+    <div class="brand">STUDIO MANAGER</div>
+    <div class="user-controls">
+      <span id="roleBadge" class="badge"></span> 
+      <button onclick="logout()" class="btn-logout">Вихід</button>
+    </div>
+  </div>
 
-// ЛОГІКА КНОПОК МОДАЛКИ (додайте це в кінці всередині DOMContentLoaded)
+  <div id="statusBar" style="display: none;"></div>
 
-// Кнопка "Скасувати"
-document.getElementById('btnCancel').onclick = function() {
-  document.getElementById('modalOverlay').style.display = 'none';
-  calendar.unselect();
-};
-
-// Кнопка "Зберегти"
-document.getElementById('btnSave').onclick = function() {
-  let title = document.getElementById('eventTitle').value;
-  let color = document.getElementById('eventColor').value;
-
-  if (title && selectedInfo) {
-    calendar.addEvent({
-      id: String(Date.now()),
-      title: title,
-      start: selectedInfo.startStr,
-      end: selectedInfo.endStr,
-      backgroundColor: color,
-      borderColor: color
-    });
+  <div class="container" id="mainApp" style="display: none;">
+    <div id='calendar'></div>
     
-    saveEvents(); // Зберігаємо в LocalStorage
-  }
+    <div class="sidebar">
+      
+      <div class="sidebar-panel">
+        <h4 style="margin-top:0;">🔍 Фільтр викладачів</h4>
+        <div id="filterList" class="filter-container"></div>
+        <button class="btn" style="font-size:12px; background:#e9ecef; color:#495057" onclick="resetFilters()">Показати всіх</button>
+      </div>
 
-  document.getElementById('modalOverlay').style.display = 'none';
-  calendar.unselect();
-};
+      <div class="sidebar-panel">
+        <h4 style="margin-top:0;">Викладачі (База)</h4>
+        <div id="teacherList"></div>
+        <div id="adminControls">
+          <input type="text" id="newTeacherName" placeholder="Додати ім'я" style="width:100%; padding:8px; box-sizing:border-box; margin-top:10px;">
+          <button class="btn btn-primary" onclick="addTeacher()">Додати в базу</button>
+        </div>
+      </div>
+
+      <div class="sidebar-panel" id="telegramPanel" style="display:none; border-left: 4px solid #0088cc;">
+        <h4 style="margin-top:0;">✈️ Telegram Bot</h4>
+        <input type="password" id="tgToken" placeholder="Bot Token" class="tg-input">
+        <input type="text" id="tgChatId" placeholder="Chat ID" class="tg-input">
+        <div style="display:flex; gap:5px; margin-top:5px;">
+            <button class="btn btn-primary" onclick="saveTgSettings()" style="font-size:12px; margin-top:0;">Зберегти</button>
+            <button class="btn" onclick="testTelegram()" style="font-size:12px; margin-top:0; background:#e9ecef;">Тест</button>
+        </div>
+        <div id="tgStatus" style="font-size:11px; color:green; margin-top:5px;"></div>
+      </div>
+
+      <div class="sidebar-panel" id="reportPanel">
+        <h4 style="margin-top:0;">Аналітика</h4>
+        <button class="btn btn-report" onclick="openReport()">📊 Згенерувати звіт</button>
+      </div>
+
+      <div class="sidebar-panel" id="techPanel" style="display:none; border: 2px solid #dc3545;">
+        <button class="btn btn-danger" onclick="resetStorage()">Скинути все (Danger)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="reportOverlay" class="overlay">
+    <div class="modal-content" style="width: 600px;">
+      <h3>📊 Звітність студії</h3>
+      <div id="reportData"></div>
+      <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+        <button class="btn btn-success" style="flex: 1;" onclick="exportToCSV()">📥 CSV</button>
+        <button class="btn" style="flex: 1; background:#eee" onclick="document.getElementById('reportOverlay').style.display='none'">Закрити</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalOverlay" class="overlay">
+    <div class="modal-content">
+      <h3>Новий запис</h3>
+      <label>ТЕМА / ПРЕДМЕТ</label>
+      <input type="text" id="eventTitle" style="width:100%; padding:10px; margin:10px 0; border: 1px solid #ddd; border-radius: 8px;">
+      
+      <label>ВИКЛАДАЧ</label>
+      <select id="eventTeacher" style="width:100%; padding:10px; margin:10px 0; border: 1px solid #ddd; border-radius: 8px;"></select>
+      
+      <label>КОЛІР (Автозбереження)</label>
+      <div class="color-input-wrapper">
+        <input type="color" id="eventColor" value="#007bff">
+        <span style="font-size: 13px; color: #666;">Колір для цього викладача</span>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn" style="background:#eee" onclick="closeModal()">Скасувати</button>
+        <button class="btn btn-primary" id="btnSave">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const USERS = {
+      "Paranoya01": { role: "Технік", level: "tech", color: "#6c757d" },
+      "admin": { role: "Адміністрація", level: "admin", color: "#007bff" },
+      "2026": { role: "Викладач", level: "teacher", color: "#28a745" }
+    };
+
+    let currentUser = null;
+    let calendar;
+    let lastReportData = null;
+    let hiddenTeachers = new Set();
+
+    function tryLogin() {
+      const pass = document.getElementById('passInput').value;
+      if (USERS[pass]) {
+        currentUser = USERS[pass];
+        sessionStorage.setItem('studio_token', pass);
+        run();
+      } else { alert("Невірний код"); }
+    }
+
+    function logout() { sessionStorage.clear(); location.reload(); }
+
+    function run() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('topBar').style.display = 'flex';
+      document.getElementById('statusBar').style.display = 'flex';
+      document.getElementById('mainApp').style.display = 'grid';
+      document.getElementById('roleBadge').textContent = currentUser.role;
+      document.getElementById('roleBadge').style.backgroundColor = currentUser.color;
+      
+      // Панель скидання бази - тільки для Техніка
+      if (currentUser.level === 'tech') {
+        document.getElementById('techPanel').style.display = 'block';
+      }
+      
+      // ПАНЕЛЬ TELEGRAM — ТЕПЕР ТІЛЬКИ ДЛЯ ТЕХНІКА 
+      if (currentUser.level === 'tech') {
+        document.getElementById('telegramPanel').style.display = 'block';
+        loadTgSettings();
+      } else {
+        document.getElementById('telegramPanel').style.display = 'none';
+      }
+
+      if (currentUser.level === 'teacher') {
+        document.getElementById('adminControls').style.display = 'none';
+        document.getElementById('reportPanel').style.display = 'none';
+      }
+      
+      renderTeachers();
+      initCalendar();
+      renderFilters();
+    }
+
+    // --- TELEGRAM LOGIC ---
+    function loadTgSettings() {
+        document.getElementById('tgToken').value = localStorage.getItem('studio_tg_token') || '';
+        document.getElementById('tgChatId').value = localStorage.getItem('studio_tg_chat') || '';
+    }
+
+    function saveTgSettings() {
+        localStorage.setItem('studio_tg_token', document.getElementById('tgToken').value);
+        localStorage.setItem('studio_tg_chat', document.getElementById('tgChatId').value);
+        document.getElementById('tgStatus').textContent = 'Збережено!';
+        setTimeout(() => document.getElementById('tgStatus').textContent = '', 2000);
+    }
+
+    async function sendTelegram(text) {
+        const token = localStorage.getItem('studio_tg_token');
+        const chatId = localStorage.getItem('studio_tg_chat');
+        if (!token || !chatId) return;
+
+        const url = `https://api.telegram.org/bot${token}/sendMessage`;
+        try {
+            await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: text,
+                    parse_mode: 'HTML'
+                })
+            });
+        } catch (e) {
+            console.error('Telegram Error:', e);
+        }
+    }
+
+    function testTelegram() {
+        sendTelegram("👋 <b>Studio Manager:</b> Тестове повідомлення успішне!");
+    }
+    // ----------------------
+
+    function initCalendar() {
+      const readonly = currentUser.level === 'teacher';
+      const isMobile = window.innerWidth <= 768;
+
+      calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        initialView: isMobile ? 'timeGridDay' : 'timeGridWeek',
+        locale: 'uk',
+        slotMinTime: '08:00:00', slotMaxTime: '21:00:00',
+        editable: !readonly, 
+        selectable: !readonly,
+        longPressDelay: 250,
+        height: 'auto',
+        headerToolbar: { 
+          left: 'prev,next', 
+          center: 'title', 
+          right: 'today,timeGridDay,timeGridWeek' 
+        },
+        events: JSON.parse(localStorage.getItem('studioEvents') || '[]'),
+        
+        eventDidMount: function(arg) {
+           if (hiddenTeachers.has(arg.event.extendedProps.teacher)) {
+             arg.el.style.display = 'none';
+           }
+        },
+
+        select: function(info) { window.selectedTime = info; document.getElementById('modalOverlay').style.display = 'flex'; },
+        
+        eventClick: function(info) { 
+            if(!readonly && confirm("Видалити запис?")) { 
+                const title = info.event.title;
+                const start = info.event.start.toLocaleString('uk-UA');
+                info.event.remove(); 
+                save(); 
+                sendTelegram(`🗑 <b>Видалено запис:</b>\n${title}\n📅 ${start}\n👤 <i>${currentUser.role}</i>`);
+            } 
+        },
+        eventDrop: save, eventResize: save
+      });
+      calendar.render();
+      updateStatus();
+    }
+
+    function save() {
+      const data = calendar.getEvents().map(e => ({
+        id: e.id, title: e.title, start: e.startStr, end: e.endStr, 
+        backgroundColor: e.backgroundColor, borderColor: e.backgroundColor,
+        extendedProps: e.extendedProps
+      }));
+      localStorage.setItem('studioEvents', JSON.stringify(data));
+      updateStatus();
+    }
+
+    function renderFilters() {
+      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
+      const container = document.getElementById('filterList');
+      container.innerHTML = list.map(t => {
+        const isHidden = hiddenTeachers.has(t);
+        return `<label class="filter-item"><input type="checkbox" ${!isHidden ? 'checked' : ''} onchange="toggleFilter('${t}', this.checked)"><span>${t}</span></label>`;
+      }).join('');
+    }
+
+    window.toggleFilter = function(teacher, isChecked) {
+      if (isChecked) hiddenTeachers.delete(teacher);
+      else hiddenTeachers.add(teacher);
+      calendar.render(); 
+    }
+
+    window.resetFilters = function() {
+      hiddenTeachers.clear();
+      renderFilters();
+      calendar.render();
+    }
+
+    document.getElementById('eventTeacher').addEventListener('change', function() {
+        const selectedTeacher = this.value;
+        const colorPrefs = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}');
+        if (colorPrefs[selectedTeacher]) {
+            document.getElementById('eventColor').value = colorPrefs[selectedTeacher];
+        }
+    });
+
+    window.openReport = function() {
+      const events = calendar.getEvents();
+      const teacherStats = {};
+      let totalHours = 0;
+      const uniqueDays = new Set();
+
+      events.forEach(e => {
+        const teacher = e.extendedProps.teacher || "Не вказано";
+        const duration = (e.end - e.start) / (1000 * 60 * 60);
+        if (!teacherStats[teacher]) teacherStats[teacher] = { count: 0, hours: 0 };
+        teacherStats[teacher].count++;
+        teacherStats[teacher].hours += duration;
+        uniqueDays.add(e.start.toISOString().split('T')[0]);
+        totalHours += duration;
+      });
+
+      const occupancyRate = uniqueDays.size > 0 ? (totalHours / (uniqueDays.size * 12) * 100).toFixed(1) : 0;
+      let html = `<h4>Завантаження: ${occupancyRate}%</h4>`;
+      html += `<div style="background:#eee; height:8px; border-radius:4px; margin-bottom:15px;"><div style="background:#007bff; height:100%; width:${occupancyRate}%; border-radius:4px;"></div></div>`;
+      html += `<table><tr><th>Викл.</th><th>К-сть</th><th>Год.</th></tr>`;
+      for (const name in teacherStats) html += `<tr><td>${name}</td><td>${teacherStats[name].count}</td><td>${teacherStats[name].hours.toFixed(1)}</td></tr>`;
+      html += `</table>`;
+      document.getElementById('reportData').innerHTML = html;
+      document.getElementById('reportOverlay').style.display = 'flex';
+      window.lastReportData = { teacherStats, totalHours, occupancyRate };
+    }
+
+    window.exportToCSV = function() {
+      if (!window.lastReportData) return;
+      const { teacherStats } = window.lastReportData;
+      let csv = "\uFEFFВикладач;Кількість занять;Годин\n";
+      for (const name in teacherStats) { csv += `${name};${teacherStats[name].count};${teacherStats[name].hours.toFixed(2)}\n`; }
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `report-${new Date().toLocaleDateString()}.csv`; a.click();
+    }
+
+    function updateStatus() {
+      const now = new Date();
+      const events = calendar.getEvents();
+      const active = events.find(e => {
+          if (hiddenTeachers.has(e.extendedProps.teacher)) return false;
+          return now >= e.start && now < e.end;
+      });
+      const bar = document.getElementById('statusBar');
+      if (active) {
+        bar.style.backgroundColor = '#dc3545';
+        bar.textContent = `🔴 ЗАРАЗ: ${active.title}`;
+      } else {
+        bar.style.backgroundColor = '#28a745';
+        bar.textContent = `🟢 СТУДІЯ ВІЛЬНА`;
+      }
+    }
+
+    window.addTeacher = function() {
+      const name = document.getElementById('newTeacherName').value;
+      if(!name) return;
+      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
+      list.push(name);
+      localStorage.setItem('studioTeachers', JSON.stringify(list));
+      document.getElementById('newTeacherName').value = '';
+      renderTeachers();
+      renderFilters();
+    }
+
+    function renderTeachers() {
+      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
+      document.getElementById('teacherList').innerHTML = list.map((t, i) => `<div class="teacher-tag">${t} <span onclick="removeTeacher(${i})" style="color:red; cursor:pointer;">✕</span></div>`).join('');
+      document.getElementById('eventTeacher').innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
+    }
+
+    window.removeTeacher = function(i) {
+      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
+      list.splice(i, 1);
+      localStorage.setItem('studioTeachers', JSON.stringify(list));
+      renderTeachers();
+      renderFilters();
+    }
+
+    document.getElementById('btnSave').onclick = function() {
+      const title = document.getElementById('eventTitle').value;
+      const teacher = document.getElementById('eventTeacher').value;
+      const color = document.getElementById('eventColor').value;
+      if(!title || !teacher) return;
+      
+      const colorPrefs = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}');
+      colorPrefs[teacher] = color;
+      localStorage.setItem('studioColorPrefs', JSON.stringify(colorPrefs));
+
+      const startTime = window.selectedTime.startStr;
+      const endTime = window.selectedTime.endStr;
+      
+      // Форматування дати для Telegram
+      const dateObj = new Date(startTime);
+      const dateStr = dateObj.toLocaleDateString('uk-UA');
+      const timeStr = dateObj.toLocaleTimeString('uk-UA', {hour: '2-digit', minute:'2-digit'});
+
+      calendar.addEvent({
+        id: String(Date.now()),
+        title: `${title} (${teacher})`,
+        start: startTime,
+        end: endTime,
+        backgroundColor: color,
+        borderColor: color,
+        extendedProps: { teacher: teacher }
+      });
+      save();
+      
+      // ВІДПРАВКА В TELEGRAM
+      sendTelegram(`✅ <b>Новий запис:</b>\n${title}\n👨‍🏫 ${teacher}\n📅 ${dateStr} о ${timeStr}\n👤 <i>Автор: ${currentUser.role}</i>`);
+
+      document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    window.closeModal = () => { document.getElementById('modalOverlay').style.display = 'none'; calendar.unselect(); }
+    window.resetStorage = () => { if(confirm("Видалити ВСЕ?")) { localStorage.clear(); location.reload(); } }
+
+    const token = sessionStorage.getItem('studio_token');
+    if (token && USERS[token]) { currentUser = USERS[token]; run(); }
   </script>
-
 </body>
 </html>
