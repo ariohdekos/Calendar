@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Календар Ліцей ЕІТ Online</title>
+  <link rel="stylesheet" href="style.css">
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+</head>
+<body>
+
+  <div id='calendar'></div>
+
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  var calendarEl = document.getElementById('calendar');
+
+  // НОВЕ: 1. Читаємо збережені події з пам'яті браузера
+  var savedEvents = localStorage.getItem('studioEvents');
+  // Якщо в пам'яті щось є — розшифровуємо, якщо ні — створюємо порожній список []
+  var initialEvents = savedEvents ? JSON.parse(savedEvents) : [];
+
+  var calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'timeGridWeek', 
+    slotMinTime: '08:00:00',     
+    slotMaxTime: '22:00:00',     
+    locale: 'uk',                
+    editable: true,              
+    selectable: true,
+    selectMirror: true,
+
+    // НОВЕ: 2. Передаємо завантажені події в календар
+    events: initialEvents,
+
+    select: function(info) {
+      var title = prompt('Введіть назву запису (наприклад: Інтерв\'ю з клієнтом):');
+      
+      if (title) {
+        calendar.addEvent({
+          id: String(Date.now()), // Генеруємо унікальний ID на основі поточного часу
+          title: title,
+          start: info.startStr,
+          end: info.endStr,
+          backgroundColor: '#28a745'
+        });
+        
+        // НОВЕ: 3. Зберігаємо зміни після створення
+        saveEvents();
+      }
+      calendar.unselect();
+    },
+
+    eventClick: function(info) {
+      if (confirm("Ви впевнені, що хочете видалити запис '" + info.event.title + "'?")) {
+        info.event.remove(); 
+        
+        // НОВЕ: Зберігаємо зміни після видалення
+        saveEvents();
+      }
+    },
+
+    eventDrop: function(info) {
+      // НОВЕ: Зберігаємо зміни після перетягування
+      saveEvents();
+    },
+
+    eventResize: function(info) {
+      // НОВЕ: Зберігаємо зміни після розтягування
+      saveEvents();
+    }
+  });
+
+  calendar.render();
+
+  // --- НОВА ФУНКЦІЯ ДЛЯ ЗБЕРЕЖЕННЯ ---
+  // Вона збирає всі події, які зараз є на екрані, і записує їх у пам'ять
+  function saveEvents() {
+    // Отримуємо всі події з календаря
+    var currentEvents = calendar.getEvents().map(function(event) {
+      return {
+        id: event.id,
+        title: event.title,
+        start: event.startStr,
+        end: event.endStr,
+        backgroundColor: event.backgroundColor
+      };
+    });
+    
+    // Перетворюємо їх у текст і записуємо в LocalStorage
+    localStorage.setItem('studioEvents', JSON.stringify(currentEvents));
+  }
+});
+  </script>
+
+</body>
+</html>
