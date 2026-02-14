@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Liceum EIT Online v5.1 (Fixed Status)</title>
+  <title>Liceum EIT Online v5.2 (Block Time)</title>
   <link rel="stylesheet" href="style.css">
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
   
@@ -101,16 +101,26 @@
   <div id="modalOverlay" class="overlay">
     <div class="modal-content">
       <h3>Новий запис</h3>
-      <label>ТЕМА / ПРЕДМЕТ</label>
-      <input type="text" id="eventTitle" style="width:100%; padding:10px; margin:10px 0; border: 1px solid #ddd; border-radius: 8px;">
       
-      <label>ВИКЛАДАЧ</label>
-      <select id="eventTeacher" style="width:100%; padding:10px; margin:10px 0; border: 1px solid #ddd; border-radius: 8px;"></select>
-      
-      <label>КОЛІР (Автозбереження)</label>
-      <div class="color-input-wrapper">
-        <input type="color" id="eventColor" value="#007bff">
-        <span style="font-size: 13px; color: #666;">Колір для цього викладача</span>
+      <div id="adminBlockOptions" style="display:none; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 1px dashed #adb5bd;">
+        <label style="display:flex; align-items:center; gap:10px; color:#495057; font-weight:bold; cursor:pointer;">
+            <input type="checkbox" id="isBlockTimeCheckbox" style="width:18px; height:18px;" onchange="toggleBlockUI(this.checked)">
+            ⛔ Заблокувати цей час (Сіра зона)
+        </label>
+      </div>
+
+      <div class="normal-event-only">
+          <label>ТЕМА / ПРЕДМЕТ</label>
+          <input type="text" id="eventTitle" style="width:100%; padding:10px; margin:10px 0; border: 1px solid #ddd; border-radius: 8px;">
+          
+          <label>ВИКЛАДАЧ</label>
+          <select id="eventTeacher" style="width:100%; padding:10px; margin:10px 0; border: 1px solid #ddd; border-radius: 8px;"></select>
+          
+          <label>КОЛІР (Автозбереження)</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="eventColor" value="#007bff">
+            <span style="font-size: 13px; color: #666;">Колір для цього викладача</span>
+          </div>
       </div>
 
       <div style="display:flex; gap:10px; margin-top:20px;">
@@ -122,31 +132,34 @@
 
   <div id="statusModalOverlay" class="overlay">
     <div class="modal-content">
-      <h3 style="margin-top:0;">Керування заняттям</h3>
+      <h3 style="margin-top:0;">Керування записом</h3>
       <p id="statusEventInfo" style="font-weight:bold; color:var(--admin-color); padding:10px; background:#f8f9fa; border-radius:8px;"></p>
 
-      <label style="font-size:12px; font-weight:bold;">ЗМІНИТИ СТАТУС:</label>
-      <select id="eventStatus" style="width:100%; padding:10px; margin:5px 0 15px 0; border:1px solid #ddd; border-radius:8px;">
-          <option value="">🟢 Активний (За планом)</option>
-          <option value="✅ Проведено">✅ Проведено (Закрити)</option>
-          <option value="🏃 Запізнююсь на 10 хв">🏃 Запізнююсь на 10 хв</option>
-          <option value="⏳ Запізнююсь на 15+ хв">⏳ Запізнююсь на 15+ хв</option>
-          <option value="🤒 Захворів(ла) / Заміна">🤒 Захворів(ла) / Заміна</option>
-          <option value="❌ Скасовано">❌ Скасовано</option>
-      </select>
+      <div id="statusSelectContainer">
+          <label style="font-size:12px; font-weight:bold;">ЗМІНИТИ СТАТУС:</label>
+          <select id="eventStatus" style="width:100%; padding:10px; margin:5px 0 15px 0; border:1px solid #ddd; border-radius:8px;">
+              <option value="">🟢 Активний (За планом)</option>
+              <option value="✅ Проведено">✅ Проведено (Закрити)</option>
+              <option value="🏃 Запізнююсь на 10 хв">🏃 Запізнююсь на 10 хв</option>
+              <option value="⏳ Запізнююсь на 15+ хв">⏳ Запізнююсь на 15+ хв</option>
+              <option value="🤒 Захворів(ла) / Заміна">🤒 Захворів(ла) / Заміна</option>
+              <option value="❌ Скасовано">❌ Скасовано</option>
+          </select>
 
-      <div style="display:flex; gap:10px;">
-        <button class="btn" style="background:#eee" onclick="closeStatusModal()">Назад</button>
-        <button class="btn btn-primary" onclick="updateEventStatus()">Зберегти статус</button>
+          <div style="display:flex; gap:10px;">
+            <button class="btn" style="background:#eee" onclick="closeStatusModal()">Назад</button>
+            <button class="btn btn-primary" onclick="updateEventStatus()">Зберегти статус</button>
+          </div>
+          <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
       </div>
 
-      <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-      
       <div id="deleteTimerMsg" style="font-size:12px; color:#666; display:none; margin-bottom:10px; text-align:center;">
         ⏳ Час на видалення вичерпано (тільки 15 хв). Зверніться до адміна.
       </div>
 
-      <button id="btnDeleteEvent" class="btn btn-danger" style="display:none;" onclick="deleteEvent()">🗑 Видалити урок</button>
+      <button id="btnDeleteEvent" class="btn btn-danger" style="display:none; width: 100%;" onclick="deleteEvent()">🗑 Видалити</button>
+      
+      <button id="btnCloseBlock" class="btn" style="display:none; background:#eee; width:100%; margin-top:10px;" onclick="closeStatusModal()">Закрити</button>
     </div>
   </div>
 
@@ -203,34 +216,26 @@
         document.getElementById('tgToken').value = localStorage.getItem('studio_tg_token') || '';
         document.getElementById('tgChatId').value = localStorage.getItem('studio_tg_chat') || '';
     }
-
     function saveTgSettings() {
         localStorage.setItem('studio_tg_token', document.getElementById('tgToken').value);
         localStorage.setItem('studio_tg_chat', document.getElementById('tgChatId').value);
         document.getElementById('tgStatus').textContent = 'Збережено!';
         setTimeout(() => document.getElementById('tgStatus').textContent = '', 2000);
     }
-
     async function sendTelegram(text) {
         const token = localStorage.getItem('studio_tg_token');
         const chatId = localStorage.getItem('studio_tg_chat');
         if (!token || !chatId) return;
-
-        const url = `https://api.telegram.org/bot${token}/sendMessage`;
         try {
-            await fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' })
             });
         } catch (e) { console.error('Telegram Error:', e); }
     }
+    function testTelegram() { sendTelegram("👋 <b>Studio Manager:</b> Тестове повідомлення успішне!"); }
 
-    function testTelegram() {
-        sendTelegram("👋 <b>Studio Manager:</b> Тестове повідомлення успішне!");
-    }
-
-    // --- CALENDAR ---
+    // --- CALENDAR ТА ЛОГІКА БЛОКУВАННЯ ---
     function initCalendar() {
       const isMobile = window.innerWidth <= 768;
       const canEditDrag = currentUser.level !== 'teacher';
@@ -243,45 +248,107 @@
         selectable: true,
         longPressDelay: 250,
         height: 'auto',
-        headerToolbar: { 
-          left: 'prev,next', 
-          center: 'title', 
-          right: 'today,timeGridDay,timeGridWeek' 
-        },
+        headerToolbar: { left: 'prev,next', center: 'title', right: 'today,timeGridDay,timeGridWeek' },
         events: JSON.parse(localStorage.getItem('studioEvents') || '[]'),
         
         eventDidMount: function(arg) {
-           if (hiddenTeachers.has(arg.event.extendedProps.teacher)) {
+           if (arg.event.extendedProps.type !== 'block' && hiddenTeachers.has(arg.event.extendedProps.teacher)) {
              arg.el.style.display = 'none';
            }
         },
 
+        // Заборона перетягування подій у заблокований час
+        eventAllow: function(dropInfo, draggedEvent) {
+            const hasBlockOverlap = calendar.getEvents().some(e => 
+                e.extendedProps.type === 'block' && e.id !== draggedEvent.id && 
+                dropInfo.start < e.end && dropInfo.end > e.start
+            );
+            if (hasBlockOverlap) return false;
+
+            if (currentUser.level === 'teacher') {
+                const hasAnyOverlap = calendar.getEvents().some(e => 
+                    e.id !== draggedEvent.id && dropInfo.start < e.end && dropInfo.end > e.start
+                );
+                if (hasAnyOverlap) return false;
+            }
+            return true;
+        },
+
         select: function(info) { 
+            // ПЕРЕВІРКА: Чи є тут блок?
+            const hasBlockOverlap = calendar.getEvents().some(e => 
+                e.extendedProps.type === 'block' && info.start < e.end && info.end > e.start
+            );
+            if (hasBlockOverlap) {
+                alert("⛔ Цей час заблоковано адміністратором!");
+                calendar.unselect();
+                return;
+            }
+
+            // ПЕРЕВІРКА: Чи вчитель не накладає свій урок на чужий?
+            if (currentUser.level === 'teacher') {
+                const hasOverlap = calendar.getEvents().some(e => info.start < e.end && info.end > e.start);
+                if (hasOverlap) {
+                    alert("⚠️ Цей час вже зайнятий!");
+                    calendar.unselect();
+                    return;
+                }
+            }
+
             window.selectedTime = info; 
+            
+            // Налаштування UI модалки
+            const blockContainer = document.getElementById('adminBlockOptions');
+            if (currentUser.level !== 'teacher') {
+                blockContainer.style.display = 'block';
+                document.getElementById('isBlockTimeCheckbox').checked = false;
+                toggleBlockUI(false);
+            } else {
+                blockContainer.style.display = 'none';
+                toggleBlockUI(false);
+            }
+
             document.getElementById('modalOverlay').style.display = 'flex'; 
         },
         
         eventClick: function(info) {
             window.currentActiveEvent = info.event;
             const props = info.event.extendedProps;
-            document.getElementById('statusEventInfo').textContent = info.event.title;
-            
-            // Логіка видалення 15 хвилин
             const btnDelete = document.getElementById('btnDeleteEvent');
             const msgTimer = document.getElementById('deleteTimerMsg');
-            const userToken = sessionStorage.getItem('studio_token');
+            const btnCloseBlock = document.getElementById('btnCloseBlock');
             
-            const createdAt = props.createdAt || 0;
-            const creatorToken = props.creatorToken || '';
-            const minutesSinceCreation = (Date.now() - createdAt) / 1000 / 60;
+            // Якщо клікнули на СІРУ ЗОНУ
+            if (props.type === 'block') {
+                document.getElementById('statusEventInfo').textContent = "⛔ ЧАС ЗАБЛОКОВАНО";
+                document.getElementById('statusSelectContainer').style.display = 'none';
+                msgTimer.style.display = 'none';
+                
+                if (currentUser.level !== 'teacher') {
+                    btnDelete.style.display = 'block';
+                    btnCloseBlock.style.display = 'none';
+                } else {
+                    btnDelete.style.display = 'none';
+                    btnCloseBlock.style.display = 'block';
+                }
+                document.getElementById('statusModalOverlay').style.display = 'flex';
+                return;
+            }
+
+            // Якщо клікнули на ЗВИЧАЙНИЙ УРОК
+            document.getElementById('statusEventInfo').textContent = info.event.title;
+            document.getElementById('statusSelectContainer').style.display = 'block';
+            btnCloseBlock.style.display = 'none';
+            
+            const userToken = sessionStorage.getItem('studio_token');
+            const minutesSinceCreation = (Date.now() - (props.createdAt || 0)) / 1000 / 60;
             
             let canDelete = false;
             if (currentUser.level === 'admin' || currentUser.level === 'tech') {
                 canDelete = true;
                 msgTimer.style.display = 'none';
             } else if (currentUser.level === 'teacher') {
-                const isMyEvent = (creatorToken === userToken);
-                if (isMyEvent && minutesSinceCreation <= 15) {
+                if (props.creatorToken === userToken && minutesSinceCreation <= 15) {
                     canDelete = true;
                     msgTimer.style.display = 'none';
                 } else {
@@ -300,10 +367,15 @@
       updateStatus();
     }
 
+    window.toggleBlockUI = function(isBlock) {
+        const els = document.querySelectorAll('.normal-event-only');
+        els.forEach(el => el.style.display = isBlock ? 'none' : 'block');
+    }
+
     function save() {
       const data = calendar.getEvents().map(e => ({
         id: e.id, title: e.title, start: e.startStr, end: e.endStr, 
-        backgroundColor: e.backgroundColor, borderColor: e.backgroundColor,
+        backgroundColor: e.backgroundColor, borderColor: e.borderColor,
         extendedProps: e.extendedProps
       }));
       localStorage.setItem('studioEvents', JSON.stringify(data));
@@ -319,7 +391,6 @@
         return `<label class="filter-item"><input type="checkbox" ${!isHidden ? 'checked' : ''} onchange="toggleFilter('${t}', this.checked)"><span>${t}</span></label>`;
       }).join('');
     }
-
     window.toggleFilter = function(teacher, isChecked) {
       if (isChecked) hiddenTeachers.delete(teacher); else hiddenTeachers.add(teacher);
       calendar.render(); 
@@ -332,13 +403,154 @@
         if (colorPrefs[selectedTeacher]) document.getElementById('eventColor').value = colorPrefs[selectedTeacher];
     });
 
-    // --- REPORTS ---
-    window.openReport = function() {
+    // --- EVENT MANAGEMENT ---
+    document.getElementById('btnSave').onclick = function() {
+      const isBlock = document.getElementById('isBlockTimeCheckbox')?.checked;
+      const startTime = window.selectedTime.startStr;
+      const endTime = window.selectedTime.endStr;
+
+      // ЛОГІКА ДЛЯ СІРОЇ ЗОНИ
+      if (isBlock) {
+          calendar.addEvent({
+              id: String(Date.now()),
+              title: '⛔ ЗАБЛОКОВАНО',
+              start: startTime,
+              end: endTime,
+              backgroundColor: '#adb5bd',
+              borderColor: '#6c757d',
+              extendedProps: { type: 'block', createdAt: Date.now() }
+          });
+          save();
+          closeModal();
+          return;
+      }
+
+      // ЛОГІКА ДЛЯ ЗВИЧАЙНОГО УРОКУ
+      const title = document.getElementById('eventTitle').value;
+      const teacher = document.getElementById('eventTeacher').value;
+      const color = document.getElementById('eventColor').value;
+      if(!title || !teacher) return;
+      
+      const colorPrefs = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}');
+      colorPrefs[teacher] = color;
+      localStorage.setItem('studioColorPrefs', JSON.stringify(colorPrefs));
+
+      calendar.addEvent({
+        id: String(Date.now()),
+        title: `${title} (${teacher})`,
+        start: startTime,
+        end: endTime,
+        backgroundColor: color,
+        borderColor: color,
+        extendedProps: { 
+            teacher: teacher, type: 'lesson',
+            createdAt: Date.now(),
+            creatorToken: sessionStorage.getItem('studio_token')
+        }
+      });
+      save();
+      
+      const dateObj = new Date(startTime);
+      sendTelegram(`✅ <b>Новий запис:</b>\n${title}\n👨‍🏫 ${teacher}\n📅 ${dateObj.toLocaleDateString('uk-UA')} о ${dateObj.toLocaleTimeString('uk-UA', {hour: '2-digit', minute:'2-digit'})}`);
+      closeModal();
+    }
+
+    window.updateEventStatus = function() {
+        const status = document.getElementById('eventStatus').value;
+        const event = window.currentActiveEvent;
+        if (!event) return;
+
+        let baseTitle = event.title.replace(/^✅\s+/, '').replace(/^(🏃|⏳|🤒|❌).*?\|\s+/, '');
+        const teacher = event.extendedProps.teacher;
+        const time = event.start.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+
+        if (status === "✅ Проведено") {
+            event.setProp('title', `✅ ${baseTitle}`);
+            event.setProp('backgroundColor', '#6c757d');
+            event.setProp('borderColor', '#6c757d');
+            sendTelegram(`🏁 <b>Урок завершено:</b>\n👨‍🏫 ${teacher}\n📝 ${baseTitle}\n🕒 ${time}`);
+        } else if (status !== "") {
+            event.setProp('title', `${status} | ${baseTitle}`);
+            const color = status.includes('Запізнююсь') ? '#fd7e14' : '#dc3545';
+            event.setProp('backgroundColor', color);
+            event.setProp('borderColor', color);
+            sendTelegram(`⚠️ <b>СТАТУС ЗМІНЕНО</b>\n👨‍🏫 ${teacher}\n🕒 Урок о ${time}\n📌 Статус: <b>${status}</b>`);
+        } else {
+            event.setProp('title', baseTitle);
+            const color = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}')[teacher] || '#007bff';
+            event.setProp('backgroundColor', color);
+            event.setProp('borderColor', color);
+        }
+        save();
+        closeStatusModal();
+    }
+
+    window.deleteEvent = function() {
+        if (confirm("Видалити цей запис?")) {
+            const title = window.currentActiveEvent.title;
+            const isBlock = window.currentActiveEvent.extendedProps.type === 'block';
+            window.currentActiveEvent.remove();
+            save();
+            if (!isBlock) sendTelegram(`🗑 <b>Урок видалено</b>\n📝 Назва: ${title}\n👤 Видалив: ${currentUser.role}`);
+            closeStatusModal();
+        }
+    }
+
+    function updateStatus() {
+      const now = new Date();
       const events = calendar.getEvents();
+      const active = events.find(e => {
+          if (e.extendedProps.type !== 'block' && hiddenTeachers.has(e.extendedProps.teacher)) return false;
+          if (e.title.includes('✅')) return false; 
+          return now >= e.start && now < e.end;
+      });
+      
+      const bar = document.getElementById('statusBar');
+      if (active) {
+        if (active.extendedProps.type === 'block') {
+            bar.style.backgroundColor = '#6c757d';
+            bar.textContent = `⛔ СТУДІЯ ЗАБЛОКОВАНА (Перерва)`;
+        } else {
+            bar.style.backgroundColor = '#dc3545';
+            bar.textContent = `🔴 ЗАРАЗ: ${active.title}`;
+        }
+      } else {
+        bar.style.backgroundColor = '#28a745';
+        bar.textContent = `🟢 СТУДІЯ ВІЛЬНА`;
+      }
+    }
+
+    // --- ІНШЕ (Вчителі, Звіти) ---
+    window.addTeacher = function() {
+      const name = document.getElementById('newTeacherName').value;
+      if(!name) return;
+      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
+      list.push(name);
+      localStorage.setItem('studioTeachers', JSON.stringify(list));
+      document.getElementById('newTeacherName').value = '';
+      renderTeachers();
+    }
+    function renderTeachers() {
+      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
+      if(currentUser.level === 'admin' || currentUser.level === 'tech') {
+          document.getElementById('teacherList').innerHTML = list.map((t, i) => `<div class="teacher-tag">${t} <span onclick="removeTeacher(${i})" style="color:red; cursor:pointer;">✕</span></div>`).join('');
+      } else {
+          document.getElementById('teacherList').innerHTML = list.map(t => `<div class="teacher-tag">${t}</div>`).join('');
+      }
+      document.getElementById('eventTeacher').innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
+    }
+    window.removeTeacher = function(i) {
+      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
+      list.splice(i, 1);
+      localStorage.setItem('studioTeachers', JSON.stringify(list));
+      renderTeachers();
+    }
+    
+    window.openReport = function() {
+      const events = calendar.getEvents().filter(e => e.extendedProps.type !== 'block');
       const teacherStats = {};
       let totalHours = 0;
       const uniqueDays = new Set();
-
       events.forEach(e => {
         const teacher = e.extendedProps.teacher || "Не вказано";
         const duration = (e.end - e.start) / (1000 * 60 * 60);
@@ -348,7 +560,6 @@
         uniqueDays.add(e.start.toISOString().split('T')[0]);
         totalHours += duration;
       });
-
       const occupancyRate = uniqueDays.size > 0 ? (totalHours / (uniqueDays.size * 12) * 100).toFixed(1) : 0;
       let html = `<h4>Завантаження: ${occupancyRate}%</h4>`;
       html += `<div style="background:#eee; height:8px; border-radius:4px; margin-bottom:15px;"><div style="background:#007bff; height:100%; width:${occupancyRate}%; border-radius:4px;"></div></div>`;
@@ -359,148 +570,13 @@
       document.getElementById('reportOverlay').style.display = 'flex';
       window.lastReportData = { teacherStats, totalHours, occupancyRate };
     }
-
     window.exportToCSV = function() {
       if (!window.lastReportData) return;
-      const { teacherStats } = window.lastReportData;
       let csv = "\uFEFFВикладач;Кількість занять;Годин\n";
-      for (const name in teacherStats) { csv += `${name};${teacherStats[name].count};${teacherStats[name].hours.toFixed(2)}\n`; }
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      for (const name in window.lastReportData.teacherStats) { csv += `${name};${window.lastReportData.teacherStats[name].count};${window.lastReportData.teacherStats[name].hours.toFixed(2)}\n`; }
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `report-${new Date().toLocaleDateString()}.csv`; a.click();
-    }
-
-    // --- EVENT MANAGEMENT ---
-    document.getElementById('btnSave').onclick = function() {
-      const title = document.getElementById('eventTitle').value;
-      const teacher = document.getElementById('eventTeacher').value;
-      const color = document.getElementById('eventColor').value;
-      if(!title || !teacher) return;
-      
-      const colorPrefs = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}');
-      colorPrefs[teacher] = color;
-      localStorage.setItem('studioColorPrefs', JSON.stringify(colorPrefs));
-
-      const startTime = window.selectedTime.startStr;
-      const endTime = window.selectedTime.endStr;
-      const dateObj = new Date(startTime);
-      const dateStr = dateObj.toLocaleDateString('uk-UA');
-      const timeStr = dateObj.toLocaleTimeString('uk-UA', {hour: '2-digit', minute:'2-digit'});
-
-      calendar.addEvent({
-        id: String(Date.now()),
-        title: `${title} (${teacher})`,
-        start: startTime,
-        end: endTime,
-        backgroundColor: color,
-        borderColor: color,
-        extendedProps: { 
-            teacher: teacher,
-            createdAt: Date.now(),
-            creatorToken: sessionStorage.getItem('studio_token')
-        }
-      });
-      save();
-      
-      sendTelegram(`✅ <b>Новий запис:</b>\n${title}\n👨‍🏫 ${teacher}\n📅 ${dateStr} о ${timeStr}\n👤 <i>Автор: ${currentUser.role}</i>`);
-      document.getElementById('modalOverlay').style.display = 'none';
-    }
-
-    window.updateEventStatus = function() {
-        const status = document.getElementById('eventStatus').value;
-        const event = window.currentActiveEvent;
-        if (!event) return;
-
-        // Чистимо старі статуси та галочки з назви
-        let baseTitle = event.title
-            .replace(/^✅\s+/, '')
-            .replace(/^(🏃|⏳|🤒|❌).*?\|\s+/, '');
-        
-        const teacher = event.extendedProps.teacher;
-        const time = event.start.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
-
-        if (status === "✅ Проведено") {
-            // ЛОГІКА ДЛЯ ЗАКРИТОГО ЗАПИСУ
-            event.setProp('title', `✅ ${baseTitle}`);
-            event.setProp('backgroundColor', '#6c757d'); // Сірий колір
-            event.setProp('borderColor', '#6c757d');
-            sendTelegram(`🏁 <b>Урок завершено:</b>\n👨‍🏫 ${teacher}\n📝 ${baseTitle}\n🕒 ${time}`);
-
-        } else if (status !== "") {
-            // ЛОГІКА ДЛЯ ПРОБЛЕМНИХ СТАТУСІВ
-            event.setProp('title', `${status} | ${baseTitle}`);
-            const color = status.includes('Запізнююсь') ? '#fd7e14' : '#dc3545';
-            event.setProp('backgroundColor', color);
-            event.setProp('borderColor', color);
-            sendTelegram(`⚠️ <b>СТАТУС ЗМІНЕНО</b>\n👨‍🏫 ${teacher}\n🕒 Урок о ${time}\n📌 Статус: <b>${status}</b>`);
-
-        } else {
-            // ПОВЕРНЕННЯ ДО НОРМИ (Все за планом)
-            event.setProp('title', baseTitle);
-            const color = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}')[teacher] || '#007bff';
-            event.setProp('backgroundColor', color);
-            event.setProp('borderColor', color);
-        }
-        
-        save();
-        closeStatusModal();
-    }
-
-    window.deleteEvent = function() {
-        if (confirm("Видалити цей запис?")) {
-            const title = window.currentActiveEvent.title;
-            window.currentActiveEvent.remove();
-            save();
-            sendTelegram(`🗑 <b>Урок видалено</b>\n📝 Назва: ${title}\n👤 Видалив: ${currentUser.role}`);
-            closeStatusModal();
-        }
-    }
-
-    function updateStatus() {
-      const now = new Date();
-      const events = calendar.getEvents();
-      const active = events.find(e => {
-          if (hiddenTeachers.has(e.extendedProps.teacher)) return false;
-          // Ігноруємо "Проведені" події при визначенні зайнятості
-          if (e.title.includes('✅')) return false; 
-          return now >= e.start && now < e.end;
-      });
-      const bar = document.getElementById('statusBar');
-      if (active) {
-        bar.style.backgroundColor = '#dc3545';
-        bar.textContent = `🔴 ЗАРАЗ: ${active.title}`;
-      } else {
-        bar.style.backgroundColor = '#28a745';
-        bar.textContent = `🟢 СТУДІЯ ВІЛЬНА`;
-      }
-    }
-
-    window.addTeacher = function() {
-      const name = document.getElementById('newTeacherName').value;
-      if(!name) return;
-      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
-      list.push(name);
-      localStorage.setItem('studioTeachers', JSON.stringify(list));
-      document.getElementById('newTeacherName').value = '';
-      renderTeachers();
-    }
-
-    function renderTeachers() {
-      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
-      if(currentUser.level === 'admin' || currentUser.level === 'tech') {
-          document.getElementById('teacherList').innerHTML = list.map((t, i) => `<div class="teacher-tag">${t} <span onclick="removeTeacher(${i})" style="color:red; cursor:pointer;">✕</span></div>`).join('');
-      } else {
-          document.getElementById('teacherList').innerHTML = list.map(t => `<div class="teacher-tag">${t}</div>`).join('');
-      }
-      document.getElementById('eventTeacher').innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
-    }
-
-    window.removeTeacher = function(i) {
-      const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
-      list.splice(i, 1);
-      localStorage.setItem('studioTeachers', JSON.stringify(list));
-      renderTeachers();
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+      a.download = `report.csv`; a.click();
     }
 
     window.closeModal = () => { document.getElementById('modalOverlay').style.display = 'none'; calendar.unselect(); }
