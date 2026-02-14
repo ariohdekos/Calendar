@@ -3,40 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Студія Ліцей ЕІТ Online v4.1 Telegram</title>
+  <title>Liceum EIT Online v5.1 (Fixed Status)</title>
   <link rel="stylesheet" href="style.css">
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
- const firebaseConfig = {
-    apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
-    authDomain: "liceum-eit-manager.firebaseapp.com",
-    databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "liceum-eit-manager",
-    storageBucket: "liceum-eit-manager.firebasestorage.app",
-    messagingSenderId: "854455059262",
-    appId: "1:854455059262:web:e6282bed63182559c5a26f",
-    measurementId: "G-NKS31DZ3MK"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
+      authDomain: "liceum-eit-manager.firebaseapp.com",
+      databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "liceum-eit-manager",
+      storageBucket: "liceum-eit-manager.firebasestorage.app",
+      messagingSenderId: "854455059262",
+      appId: "1:854455059262:web:e6282bed63182559c5a26f",
+      measurementId: "G-NKS31DZ3MK"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  // ФУНКЦІЯ ЖИВОГО СИНХРОНУ
-  function syncWithCloud() {
-    const eventsRef = ref(db, 'events');
-    // Слухаємо зміни в хмарі
-    onValue(eventsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        calendar.removeAllEvents();
-        calendar.addEventSource(data);
-      }
-    });
-  }
-</script>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+  </script>
 </head>
 <body>
 
@@ -45,7 +33,6 @@
       <h2>Liceum EIT Online</h2>
       <input type="password" id="passInput" placeholder="Код доступу">
       <button class="btn btn-primary" onclick="tryLogin()">Увійти</button>
-      <!-- <p style="font-size: 10px; color: #888; margin-top: 20px;">Tech: 777 | Admin: 888 | Teacher: 999</p> -->
     </div>
   </div>
 
@@ -63,14 +50,13 @@
     <div id='calendar'></div>
     
     <div class="sidebar">
-      
       <div class="sidebar-panel">
         <h4 style="margin-top:0;">🔍 Фільтр викладачів</h4>
         <div id="filterList" class="filter-container"></div>
         <button class="btn" style="font-size:12px; background:#e9ecef; color:#495057" onclick="resetFilters()">Показати всіх</button>
       </div>
 
-      <div class="sidebar-panel">
+      <div class="sidebar-panel" id="teachersPanel">
         <h4 style="margin-top:0;">Викладачі (База)</h4>
         <div id="teacherList"></div>
         <div id="adminControls">
@@ -133,56 +119,37 @@
       </div>
     </div>
   </div>
-<div id="statusModalOverlay" class="overlay">
+
+  <div id="statusModalOverlay" class="overlay">
     <div class="modal-content">
       <h3 style="margin-top:0;">Керування заняттям</h3>
-      <p id="statusEventTitle" style="font-weight:bold; color:var(--admin-color); padding: 10px; background: #f8f9fa; border-radius: 8px;"></p>
+      <p id="statusEventInfo" style="font-weight:bold; color:var(--admin-color); padding:10px; background:#f8f9fa; border-radius:8px;"></p>
 
-      <label style="font-size:12px; font-weight:bold; color:#666;">ОБЕРІТЬ СТАТУС:</label>
-      <select id="eventStatus" style="width:100%; padding:10px; margin:5px 0 15px 0; border: 1px solid #ddd; border-radius: 8px;">
-          <option value="">🟢 Все за планом (Без мітки)</option>
-          <option value="🏃 Запізнююсь (5-10 хв)">🏃 Запізнююсь (5-10 хв)</option>
-          <option value="⏳ Запізнююсь (>15 хв)">⏳ Запізнююсь (>15 хв)</option>
-          <option value="🤒 Захворів (Потрібна заміна)">🤒 Захворів (Потрібна заміна)</option>
-          <option value="❌ Не прийду (Скасовано)">❌ Не прийду (Скасовано)</option>
+      <label style="font-size:12px; font-weight:bold;">ЗМІНИТИ СТАТУС:</label>
+      <select id="eventStatus" style="width:100%; padding:10px; margin:5px 0 15px 0; border:1px solid #ddd; border-radius:8px;">
+          <option value="">🟢 Активний (За планом)</option>
+          <option value="✅ Проведено">✅ Проведено (Закрити)</option>
+          <option value="🏃 Запізнююсь на 10 хв">🏃 Запізнююсь на 10 хв</option>
+          <option value="⏳ Запізнююсь на 15+ хв">⏳ Запізнююсь на 15+ хв</option>
+          <option value="🤒 Захворів(ла) / Заміна">🤒 Захворів(ла) / Заміна</option>
+          <option value="❌ Скасовано">❌ Скасовано</option>
       </select>
 
-      <div style="display:flex; gap:10px; margin-top:10px;">
-        <button class="btn" style="background:#eee; color:#333;" onclick="closeStatusModal()">Закрити</button>
-        <button class="btn btn-primary" onclick="applyEventStatus()">Зберегти статус</button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn" style="background:#eee" onclick="closeStatusModal()">Назад</button>
+        <button class="btn btn-primary" onclick="updateEventStatus()">Зберегти статус</button>
       </div>
 
       <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-      <button class="btn btn-danger" id="btnDeleteEvent" style="display:none;" onclick="handleDeleteEvent()">🗑 Видалити запис</button>
+      
+      <div id="deleteTimerMsg" style="font-size:12px; color:#666; display:none; margin-bottom:10px; text-align:center;">
+        ⏳ Час на видалення вичерпано (тільки 15 хв). Зверніться до адміна.
+      </div>
+
+      <button id="btnDeleteEvent" class="btn btn-danger" style="display:none;" onclick="deleteEvent()">🗑 Видалити урок</button>
     </div>
   </div>
 
-      <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-      <button class="btn btn-danger" id="btnDeleteEvent" style="display:none;" onclick="deleteSelectedEvent()">🗑 Видалити запис</button>
-    </div>
-  </div>
-  <div id="statusModalOverlay" class="overlay">
-  <div class="modal-content">
-    <h3 style="margin-top:0;">Керування заняттям</h3>
-    <p id="statusEventInfo" style="font-weight:bold; color:var(--admin-color); padding:10px; background:#f8f9fa; border-radius:8px;"></p>
-
-    <label style="font-size:12px; font-weight:bold;">ОБЕРІТЬ СТАТУС:</label>
-    <select id="eventStatus" style="width:100%; padding:10px; margin:5px 0 15px 0; border:1px solid #ddd; border-radius:8px;">
-        <option value="">🟢 Все за планом</option>
-        <option value="🏃 Запізнююсь на 10 хв">🏃 Запізнююсь на 10 хв</option>
-        <option value="⏳ Запізнююсь на 15+ хв">⏳ Запізнююсь на 15+ хв</option>
-        <option value="🤒 Захворів(ла) / Заміна">🤒 Захворів(ла) / Заміна</option>
-        <option value="❌ Скасовано">❌ Скасовано</option>
-    </select>
-
-    <div style="display:flex; gap:10px;">
-      <button class="btn" style="background:#eee" onclick="closeStatusModal()">Закрити</button>
-      <button class="btn btn-primary" onclick="updateEventStatus()">Оновити статус</button>
-    </div>
-
-    <button id="btnDeleteEvent" class="btn btn-danger" style="margin-top:20px; display:none;" onclick="deleteEvent()">🗑 Видалити урок</button>
-  </div>
-</div>
   <script>
     const USERS = {
       "Paranoya01": { role: "Технік", level: "tech", color: "#6c757d" },
@@ -194,6 +161,7 @@
     let calendar;
     let lastReportData = null;
     let hiddenTeachers = new Set();
+    let currentActiveEvent = null;
 
     function tryLogin() {
       const pass = document.getElementById('passInput').value;
@@ -214,17 +182,10 @@
       document.getElementById('roleBadge').textContent = currentUser.role;
       document.getElementById('roleBadge').style.backgroundColor = currentUser.color;
       
-      // Панель скидання бази - тільки для Техніка
       if (currentUser.level === 'tech') {
         document.getElementById('techPanel').style.display = 'block';
-      }
-      
-      // ПАНЕЛЬ TELEGRAM — ТЕПЕР ТІЛЬКИ ДЛЯ ТЕХНІКА 
-      if (currentUser.level === 'tech') {
         document.getElementById('telegramPanel').style.display = 'block';
         loadTgSettings();
-      } else {
-        document.getElementById('telegramPanel').style.display = 'none';
       }
 
       if (currentUser.level === 'teacher') {
@@ -237,7 +198,7 @@
       renderFilters();
     }
 
-    // --- TELEGRAM LOGIC ---
+    // --- TELEGRAM ---
     function loadTgSettings() {
         document.getElementById('tgToken').value = localStorage.getItem('studio_tg_token') || '';
         document.getElementById('tgChatId').value = localStorage.getItem('studio_tg_chat') || '';
@@ -260,32 +221,26 @@
             await fetch(url, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: text,
-                    parse_mode: 'HTML'
-                })
+                body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' })
             });
-        } catch (e) {
-            console.error('Telegram Error:', e);
-        }
+        } catch (e) { console.error('Telegram Error:', e); }
     }
 
     function testTelegram() {
         sendTelegram("👋 <b>Studio Manager:</b> Тестове повідомлення успішне!");
     }
-    // ----------------------
 
+    // --- CALENDAR ---
     function initCalendar() {
-      const readonly = currentUser.level === 'teacher';
       const isMobile = window.innerWidth <= 768;
+      const canEditDrag = currentUser.level !== 'teacher';
 
       calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: isMobile ? 'timeGridDay' : 'timeGridWeek',
         locale: 'uk',
         slotMinTime: '08:00:00', slotMaxTime: '21:00:00',
-        editable: !readonly, 
-        selectable: !readonly,
+        editable: canEditDrag, 
+        selectable: true,
         longPressDelay: 250,
         height: 'auto',
         headerToolbar: { 
@@ -301,22 +256,44 @@
            }
         },
 
-        select: function(info) { window.selectedTime = info; document.getElementById('modalOverlay').style.display = 'flex'; },
+        select: function(info) { 
+            window.selectedTime = info; 
+            document.getElementById('modalOverlay').style.display = 'flex'; 
+        },
         
-   // Коли клікаємо на вже існуючий урок
-eventClick: function(info) {
-    window.currentActiveEvent = info.event;
-    const props = info.event.extendedProps;
-    
-    // Показуємо назву в модалці
-    document.getElementById('statusEventInfo').textContent = info.event.title;
-    
-    // Відображаємо кнопку видалення лише для адмінів/техніків
-    document.getElementById('btnDeleteEvent').style.display = (currentUser.level !== 'teacher') ? 'block' : 'none';
-    
-    // Відкриваємо модалку статусів
-    document.getElementById('statusModalOverlay').style.display = 'flex';
-},
+        eventClick: function(info) {
+            window.currentActiveEvent = info.event;
+            const props = info.event.extendedProps;
+            document.getElementById('statusEventInfo').textContent = info.event.title;
+            
+            // Логіка видалення 15 хвилин
+            const btnDelete = document.getElementById('btnDeleteEvent');
+            const msgTimer = document.getElementById('deleteTimerMsg');
+            const userToken = sessionStorage.getItem('studio_token');
+            
+            const createdAt = props.createdAt || 0;
+            const creatorToken = props.creatorToken || '';
+            const minutesSinceCreation = (Date.now() - createdAt) / 1000 / 60;
+            
+            let canDelete = false;
+            if (currentUser.level === 'admin' || currentUser.level === 'tech') {
+                canDelete = true;
+                msgTimer.style.display = 'none';
+            } else if (currentUser.level === 'teacher') {
+                const isMyEvent = (creatorToken === userToken);
+                if (isMyEvent && minutesSinceCreation <= 15) {
+                    canDelete = true;
+                    msgTimer.style.display = 'none';
+                } else {
+                    canDelete = false;
+                    msgTimer.style.display = 'block';
+                }
+            }
+
+            btnDelete.style.display = canDelete ? 'block' : 'none';
+            document.getElementById('statusModalOverlay').style.display = 'flex';
+        },
+
         eventDrop: save, eventResize: save
       });
       calendar.render();
@@ -333,6 +310,7 @@ eventClick: function(info) {
       updateStatus();
     }
 
+    // --- FILTERS ---
     function renderFilters() {
       const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
       const container = document.getElementById('filterList');
@@ -343,25 +321,18 @@ eventClick: function(info) {
     }
 
     window.toggleFilter = function(teacher, isChecked) {
-      if (isChecked) hiddenTeachers.delete(teacher);
-      else hiddenTeachers.add(teacher);
+      if (isChecked) hiddenTeachers.delete(teacher); else hiddenTeachers.add(teacher);
       calendar.render(); 
     }
-
-    window.resetFilters = function() {
-      hiddenTeachers.clear();
-      renderFilters();
-      calendar.render();
-    }
+    window.resetFilters = function() { hiddenTeachers.clear(); renderFilters(); calendar.render(); }
 
     document.getElementById('eventTeacher').addEventListener('change', function() {
         const selectedTeacher = this.value;
         const colorPrefs = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}');
-        if (colorPrefs[selectedTeacher]) {
-            document.getElementById('eventColor').value = colorPrefs[selectedTeacher];
-        }
+        if (colorPrefs[selectedTeacher]) document.getElementById('eventColor').value = colorPrefs[selectedTeacher];
     });
 
+    // --- REPORTS ---
     window.openReport = function() {
       const events = calendar.getEvents();
       const teacherStats = {};
@@ -400,11 +371,99 @@ eventClick: function(info) {
       a.download = `report-${new Date().toLocaleDateString()}.csv`; a.click();
     }
 
+    // --- EVENT MANAGEMENT ---
+    document.getElementById('btnSave').onclick = function() {
+      const title = document.getElementById('eventTitle').value;
+      const teacher = document.getElementById('eventTeacher').value;
+      const color = document.getElementById('eventColor').value;
+      if(!title || !teacher) return;
+      
+      const colorPrefs = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}');
+      colorPrefs[teacher] = color;
+      localStorage.setItem('studioColorPrefs', JSON.stringify(colorPrefs));
+
+      const startTime = window.selectedTime.startStr;
+      const endTime = window.selectedTime.endStr;
+      const dateObj = new Date(startTime);
+      const dateStr = dateObj.toLocaleDateString('uk-UA');
+      const timeStr = dateObj.toLocaleTimeString('uk-UA', {hour: '2-digit', minute:'2-digit'});
+
+      calendar.addEvent({
+        id: String(Date.now()),
+        title: `${title} (${teacher})`,
+        start: startTime,
+        end: endTime,
+        backgroundColor: color,
+        borderColor: color,
+        extendedProps: { 
+            teacher: teacher,
+            createdAt: Date.now(),
+            creatorToken: sessionStorage.getItem('studio_token')
+        }
+      });
+      save();
+      
+      sendTelegram(`✅ <b>Новий запис:</b>\n${title}\n👨‍🏫 ${teacher}\n📅 ${dateStr} о ${timeStr}\n👤 <i>Автор: ${currentUser.role}</i>`);
+      document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    window.updateEventStatus = function() {
+        const status = document.getElementById('eventStatus').value;
+        const event = window.currentActiveEvent;
+        if (!event) return;
+
+        // Чистимо старі статуси та галочки з назви
+        let baseTitle = event.title
+            .replace(/^✅\s+/, '')
+            .replace(/^(🏃|⏳|🤒|❌).*?\|\s+/, '');
+        
+        const teacher = event.extendedProps.teacher;
+        const time = event.start.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+
+        if (status === "✅ Проведено") {
+            // ЛОГІКА ДЛЯ ЗАКРИТОГО ЗАПИСУ
+            event.setProp('title', `✅ ${baseTitle}`);
+            event.setProp('backgroundColor', '#6c757d'); // Сірий колір
+            event.setProp('borderColor', '#6c757d');
+            sendTelegram(`🏁 <b>Урок завершено:</b>\n👨‍🏫 ${teacher}\n📝 ${baseTitle}\n🕒 ${time}`);
+
+        } else if (status !== "") {
+            // ЛОГІКА ДЛЯ ПРОБЛЕМНИХ СТАТУСІВ
+            event.setProp('title', `${status} | ${baseTitle}`);
+            const color = status.includes('Запізнююсь') ? '#fd7e14' : '#dc3545';
+            event.setProp('backgroundColor', color);
+            event.setProp('borderColor', color);
+            sendTelegram(`⚠️ <b>СТАТУС ЗМІНЕНО</b>\n👨‍🏫 ${teacher}\n🕒 Урок о ${time}\n📌 Статус: <b>${status}</b>`);
+
+        } else {
+            // ПОВЕРНЕННЯ ДО НОРМИ (Все за планом)
+            event.setProp('title', baseTitle);
+            const color = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}')[teacher] || '#007bff';
+            event.setProp('backgroundColor', color);
+            event.setProp('borderColor', color);
+        }
+        
+        save();
+        closeStatusModal();
+    }
+
+    window.deleteEvent = function() {
+        if (confirm("Видалити цей запис?")) {
+            const title = window.currentActiveEvent.title;
+            window.currentActiveEvent.remove();
+            save();
+            sendTelegram(`🗑 <b>Урок видалено</b>\n📝 Назва: ${title}\n👤 Видалив: ${currentUser.role}`);
+            closeStatusModal();
+        }
+    }
+
     function updateStatus() {
       const now = new Date();
       const events = calendar.getEvents();
       const active = events.find(e => {
           if (hiddenTeachers.has(e.extendedProps.teacher)) return false;
+          // Ігноруємо "Проведені" події при визначенні зайнятості
+          if (e.title.includes('✅')) return false; 
           return now >= e.start && now < e.end;
       });
       const bar = document.getElementById('statusBar');
@@ -425,12 +484,15 @@ eventClick: function(info) {
       localStorage.setItem('studioTeachers', JSON.stringify(list));
       document.getElementById('newTeacherName').value = '';
       renderTeachers();
-      renderFilters();
     }
 
     function renderTeachers() {
       const list = JSON.parse(localStorage.getItem('studioTeachers') || '[]');
-      document.getElementById('teacherList').innerHTML = list.map((t, i) => `<div class="teacher-tag">${t} <span onclick="removeTeacher(${i})" style="color:red; cursor:pointer;">✕</span></div>`).join('');
+      if(currentUser.level === 'admin' || currentUser.level === 'tech') {
+          document.getElementById('teacherList').innerHTML = list.map((t, i) => `<div class="teacher-tag">${t} <span onclick="removeTeacher(${i})" style="color:red; cursor:pointer;">✕</span></div>`).join('');
+      } else {
+          document.getElementById('teacherList').innerHTML = list.map(t => `<div class="teacher-tag">${t}</div>`).join('');
+      }
       document.getElementById('eventTeacher').innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
@@ -439,148 +501,14 @@ eventClick: function(info) {
       list.splice(i, 1);
       localStorage.setItem('studioTeachers', JSON.stringify(list));
       renderTeachers();
-      renderFilters();
     }
 
-    document.getElementById('btnSave').onclick = function() {
-      const title = document.getElementById('eventTitle').value;
-      const teacher = document.getElementById('eventTeacher').value;
-      const color = document.getElementById('eventColor').value;
-      if(!title || !teacher) return;
-      
-      const colorPrefs = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}');
-      colorPrefs[teacher] = color;
-      localStorage.setItem('studioColorPrefs', JSON.stringify(colorPrefs));
-
-      const startTime = window.selectedTime.startStr;
-      const endTime = window.selectedTime.endStr;
-      
-      // Форматування дати для Telegram
-      const dateObj = new Date(startTime);
-      const dateStr = dateObj.toLocaleDateString('uk-UA');
-      const timeStr = dateObj.toLocaleTimeString('uk-UA', {hour: '2-digit', minute:'2-digit'});
-
-      calendar.addEvent({
-        id: String(Date.now()),
-        title: `${title} (${teacher})`,
-        start: startTime,
-        end: endTime,
-        backgroundColor: color,
-        borderColor: color,
-        extendedProps: { teacher: teacher }
-      });
-      save();
-      
-      // ВІДПРАВКА В TELEGRAM
-      sendTelegram(`✅ <b>Новий запис:</b>\n${title}\n👨‍🏫 ${teacher}\n📅 ${dateStr} о ${timeStr}\n👤 <i>Автор: ${currentUser.role}</i>`);
-
-      document.getElementById('modalOverlay').style.display = 'none';
-    }
-window.closeStatusModal = function() {
-        document.getElementById('statusModalOverlay').style.display = 'none';
-        window.clickedEvent = null;
-    }
-
-    window.saveEventStatus = function() {
-        if (!window.clickedEvent) return;
-        
-        const newStatus = document.getElementById('eventStatus').value;
-        const baseTitle = window.clickedEvent.extendedProps.baseTitle || window.clickedEvent.title;
-        const teacher = window.clickedEvent.extendedProps.teacher;
-        
-        window.clickedEvent.setExtendedProp('status', newStatus);
-        window.clickedEvent.setExtendedProp('baseTitle', baseTitle);
-
-        let displayTitle = baseTitle;
-        const colorPrefs = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}');
-        const origColor = colorPrefs[teacher] || '#007bff';
-
-        if (newStatus !== "") {
-            const statusIcon = newStatus.split(' ')[0]; // Беремо тільки емодзі для назви
-            displayTitle = `${statusIcon} ${baseTitle}`;
-            
-            // Змінюємо колір блоку для привернення уваги
-            if (newStatus.includes("Захворів") || newStatus.includes("Скасовано")) {
-                window.clickedEvent.setProp('backgroundColor', '#dc3545'); // Червоний
-                window.clickedEvent.setProp('borderColor', '#dc3545');
-            } else if (newStatus.includes("Запізнююсь")) {
-                window.clickedEvent.setProp('backgroundColor', '#fd7e14'); // Помаранчевий
-                window.clickedEvent.setProp('borderColor', '#fd7e14');
-            }
-        } else {
-            // Повертаємо стандартний колір, якщо все ок
-            window.clickedEvent.setProp('backgroundColor', origColor);
-            window.clickedEvent.setProp('borderColor', origColor);
-        }
-
-        window.clickedEvent.setProp('title', displayTitle);
-        save();
-        
-        // Відправляємо сповіщення в Telegram
-        if (newStatus !== "") {
-            const dateObj = window.clickedEvent.start;
-            const timeStr = dateObj.toLocaleTimeString('uk-UA', {hour: '2-digit', minute:'2-digit'});
-            sendTelegram(`⚠️ <b>Оновлення статусу!</b>\n👨‍🏫 ${teacher}\n🕒 Заняття о ${timeStr}\n📌 Статус: <b>${newStatus}</b>`);
-        }
-
-        closeStatusModal();
-    }
-
-    window.deleteSelectedEvent = function() {
-        if (confirm("Точно видалити цей запис?")) {
-            const title = window.clickedEvent.extendedProps.baseTitle || window.clickedEvent.title;
-            const startStr = window.clickedEvent.start.toLocaleString('uk-UA');
-            window.clickedEvent.remove();
-            save();
-            sendTelegram(`🗑 <b>Скасовано заняття:</b>\n${title}\n📅 ${startStr}\n👤 <i>Видалив: ${currentUser.role}</i>`);
-            closeStatusModal();
-        }
-    }
     window.closeModal = () => { document.getElementById('modalOverlay').style.display = 'none'; calendar.unselect(); }
+    window.closeStatusModal = () => { document.getElementById('statusModalOverlay').style.display = 'none'; }
     window.resetStorage = () => { if(confirm("Видалити ВСЕ?")) { localStorage.clear(); location.reload(); } }
 
     const token = sessionStorage.getItem('studio_token');
     if (token && USERS[token]) { currentUser = USERS[token]; run(); }
-    window.closeStatusModal = () => { document.getElementById('statusModalOverlay').style.display = 'none'; }
-
-window.updateEventStatus = function() {
-    const status = document.getElementById('eventStatus').value;
-    const event = window.currentActiveEvent;
-    if (!event) return;
-
-    const baseTitle = event.title.split(' | ')[0]; // Очищуємо від старих статусів
-    const teacher = event.extendedProps.teacher;
-
-    if (status !== "") {
-        event.setProp('title', `${status} | ${baseTitle}`);
-        // Змінюємо колір на тривожний (помаранчевий/червоний)
-        const color = status.includes('Запізнююсь') ? '#fd7e14' : '#dc3545';
-        event.setProp('backgroundColor', color);
-        event.setProp('borderColor', color);
-
-        // ВІДПРАВКА В TELEGRAM
-        const time = event.start.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
-        sendTelegram(`⚠️ <b>СТАТУС ЗМІНЕНО</b>\n👨‍🏫 Викладач: ${teacher}\n🕒 Урок о ${time}\n📌 Статус: <b>${status}</b>`);
-    } else {
-        // Повертаємо стандартний вигляд
-        event.setProp('title', baseTitle);
-        const color = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}')[teacher] || '#007bff';
-        event.setProp('backgroundColor', color);
-    }
-
-    save(); // Зберігаємо в базу/localStorage
-    closeStatusModal();
-}
-
-window.deleteEvent = function() {
-    if (confirm("Видалити цей запис?")) {
-        const title = window.currentActiveEvent.title;
-        window.currentActiveEvent.remove();
-        save();
-        sendTelegram(`🗑 <b>Урок видалено</b>\n📝 Назва: ${title}\n👤 Видалив: ${currentUser.role}`);
-        closeStatusModal();
-    }
-}
   </script>
 </body>
 </html>
