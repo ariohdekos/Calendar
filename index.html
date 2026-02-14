@@ -133,7 +133,51 @@
       </div>
     </div>
   </div>
+<div id="statusModalOverlay" class="overlay">
+    <div class="modal-content">
+      <h3 style="margin-top:0;">Керування заняттям</h3>
+      <p id="statusEventTitle" style="font-weight:bold; color:var(--admin-color); padding: 10px; background: #f8f9fa; border-radius: 8px;"></p>
 
+      <label style="font-size:12px; font-weight:bold; color:#666;">СТАТУС ВИКЛАДАЧА</label>
+      <select id="eventStatus" style="width:100%; padding:10px; margin:5px 0 15px 0; border: 1px solid #ddd; border-radius: 8px;">
+          <option value="">🟢 Все за планом (Без мітки)</option>
+          <option value="🏃 Запізнююсь (5-10 хв)">🏃 Запізнююсь (5-10 хв)</option>
+          <option value="⏳ Запізнююсь (>15 хв)">⏳ Запізнююсь (>15 хв)</option>
+          <option value="🤒 Захворів (Потрібна заміна)">🤒 Захворів (Потрібна заміна)</option>
+          <option value="❌ Не прийду (Скасовано)">❌ Не прийду (Скасовано)</option>
+      </select>
+
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button class="btn" style="background:#eee; color:#333;" onclick="closeStatusModal()">Закрити</button>
+        <button class="btn btn-primary" onclick="saveEventStatus()">Зберегти статус</button>
+      </div>
+
+      <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+      <button class="btn btn-danger" id="btnDeleteEvent" style="display:none;" onclick="deleteSelectedEvent()">🗑 Видалити запис</button>
+    </div>
+  </div>
+  <div id="statusModalOverlay" class="overlay">
+  <div class="modal-content">
+    <h3 style="margin-top:0;">Керування заняттям</h3>
+    <p id="statusEventInfo" style="font-weight:bold; color:var(--admin-color); padding:10px; background:#f8f9fa; border-radius:8px;"></p>
+
+    <label style="font-size:12px; font-weight:bold;">ОБЕРІТЬ СТАТУС:</label>
+    <select id="eventStatus" style="width:100%; padding:10px; margin:5px 0 15px 0; border:1px solid #ddd; border-radius:8px;">
+        <option value="">🟢 Все за планом</option>
+        <option value="🏃 Запізнююсь на 10 хв">🏃 Запізнююсь на 10 хв</option>
+        <option value="⏳ Запізнююсь на 15+ хв">⏳ Запізнююсь на 15+ хв</option>
+        <option value="🤒 Захворів(ла) / Заміна">🤒 Захворів(ла) / Заміна</option>
+        <option value="❌ Скасовано">❌ Скасовано</option>
+    </select>
+
+    <div style="display:flex; gap:10px;">
+      <button class="btn" style="background:#eee" onclick="closeStatusModal()">Закрити</button>
+      <button class="btn btn-primary" onclick="updateEventStatus()">Оновити статус</button>
+    </div>
+
+    <button id="btnDeleteEvent" class="btn btn-danger" style="margin-top:20px; display:none;" onclick="deleteEvent()">🗑 Видалити урок</button>
+  </div>
+</div>
   <script>
     const USERS = {
       "Paranoya01": { role: "Технік", level: "tech", color: "#6c757d" },
@@ -254,15 +298,20 @@
 
         select: function(info) { window.selectedTime = info; document.getElementById('modalOverlay').style.display = 'flex'; },
         
-        eventClick: function(info) { 
-            if(!readonly && confirm("Видалити запис?")) { 
-                const title = info.event.title;
-                const start = info.event.start.toLocaleString('uk-UA');
-                info.event.remove(); 
-                save(); 
-                sendTelegram(`🗑 <b>Видалено запис:</b>\n${title}\n📅 ${start}\n👤 <i>${currentUser.role}</i>`);
-            } 
-        },
+   // Коли клікаємо на вже існуючий урок
+eventClick: function(info) {
+    window.currentActiveEvent = info.event;
+    const props = info.event.extendedProps;
+    
+    // Показуємо назву в модалці
+    document.getElementById('statusEventInfo').textContent = info.event.title;
+    
+    // Відображаємо кнопку видалення лише для адмінів/техніків
+    document.getElementById('btnDeleteEvent').style.display = (currentUser.level !== 'teacher') ? 'block' : 'none';
+    
+    // Відкриваємо модалку статусів
+    document.getElementById('statusModalOverlay').style.display = 'flex';
+},
         eventDrop: save, eventResize: save
       });
       calendar.render();
@@ -422,12 +471,111 @@
 
       document.getElementById('modalOverlay').style.display = 'none';
     }
+window.closeStatusModal = function() {
+        document.getElementById('statusModalOverlay').style.display = 'none';
+        window.clickedEvent = null;
+    }
 
+    window.saveEventStatus = function() {
+        if (!window.clickedEvent) return;
+        
+        const newStatus = document.getElementById('eventStatus').value;
+        const baseTitle = window.clickedEvent.extendedProps.baseTitle || window.clickedEvent.title;
+        const teacher = window.clickedEvent.extendedProps.teacher;
+        
+        window.clickedEvent.setExtendedProp('status', newStatus);
+        window.clickedEvent.setExtendedProp('baseTitle', baseTitle);
+
+        let displayTitle = baseTitle;
+        const colorPrefs = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}');
+        const origColor = colorPrefs[teacher] || '#007bff';
+
+        if (newStatus !== "") {
+            const statusIcon = newStatus.split(' ')[0]; // Беремо тільки емодзі для назви
+            displayTitle = `${statusIcon} ${baseTitle}`;
+            
+            // Змінюємо колір блоку для привернення уваги
+            if (newStatus.includes("Захворів") || newStatus.includes("Скасовано")) {
+                window.clickedEvent.setProp('backgroundColor', '#dc3545'); // Червоний
+                window.clickedEvent.setProp('borderColor', '#dc3545');
+            } else if (newStatus.includes("Запізнююсь")) {
+                window.clickedEvent.setProp('backgroundColor', '#fd7e14'); // Помаранчевий
+                window.clickedEvent.setProp('borderColor', '#fd7e14');
+            }
+        } else {
+            // Повертаємо стандартний колір, якщо все ок
+            window.clickedEvent.setProp('backgroundColor', origColor);
+            window.clickedEvent.setProp('borderColor', origColor);
+        }
+
+        window.clickedEvent.setProp('title', displayTitle);
+        save();
+        
+        // Відправляємо сповіщення в Telegram
+        if (newStatus !== "") {
+            const dateObj = window.clickedEvent.start;
+            const timeStr = dateObj.toLocaleTimeString('uk-UA', {hour: '2-digit', minute:'2-digit'});
+            sendTelegram(`⚠️ <b>Оновлення статусу!</b>\n👨‍🏫 ${teacher}\n🕒 Заняття о ${timeStr}\n📌 Статус: <b>${newStatus}</b>`);
+        }
+
+        closeStatusModal();
+    }
+
+    window.deleteSelectedEvent = function() {
+        if (confirm("Точно видалити цей запис?")) {
+            const title = window.clickedEvent.extendedProps.baseTitle || window.clickedEvent.title;
+            const startStr = window.clickedEvent.start.toLocaleString('uk-UA');
+            window.clickedEvent.remove();
+            save();
+            sendTelegram(`🗑 <b>Скасовано заняття:</b>\n${title}\n📅 ${startStr}\n👤 <i>Видалив: ${currentUser.role}</i>`);
+            closeStatusModal();
+        }
+    }
     window.closeModal = () => { document.getElementById('modalOverlay').style.display = 'none'; calendar.unselect(); }
     window.resetStorage = () => { if(confirm("Видалити ВСЕ?")) { localStorage.clear(); location.reload(); } }
 
     const token = sessionStorage.getItem('studio_token');
     if (token && USERS[token]) { currentUser = USERS[token]; run(); }
+    window.closeStatusModal = () => { document.getElementById('statusModalOverlay').style.display = 'none'; }
+
+window.updateEventStatus = function() {
+    const status = document.getElementById('eventStatus').value;
+    const event = window.currentActiveEvent;
+    if (!event) return;
+
+    const baseTitle = event.title.split(' | ')[0]; // Очищуємо від старих статусів
+    const teacher = event.extendedProps.teacher;
+
+    if (status !== "") {
+        event.setProp('title', `${status} | ${baseTitle}`);
+        // Змінюємо колір на тривожний (помаранчевий/червоний)
+        const color = status.includes('Запізнююсь') ? '#fd7e14' : '#dc3545';
+        event.setProp('backgroundColor', color);
+        event.setProp('borderColor', color);
+
+        // ВІДПРАВКА В TELEGRAM
+        const time = event.start.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+        sendTelegram(`⚠️ <b>СТАТУС ЗМІНЕНО</b>\n👨‍🏫 Викладач: ${teacher}\n🕒 Урок о ${time}\n📌 Статус: <b>${status}</b>`);
+    } else {
+        // Повертаємо стандартний вигляд
+        event.setProp('title', baseTitle);
+        const color = JSON.parse(localStorage.getItem('studioColorPrefs') || '{}')[teacher] || '#007bff';
+        event.setProp('backgroundColor', color);
+    }
+
+    save(); // Зберігаємо в базу/localStorage
+    closeStatusModal();
+}
+
+window.deleteEvent = function() {
+    if (confirm("Видалити цей запис?")) {
+        const title = window.currentActiveEvent.title;
+        window.currentActiveEvent.remove();
+        save();
+        sendTelegram(`🗑 <b>Урок видалено</b>\n📝 Назва: ${title}\n👤 Видалив: ${currentUser.role}`);
+        closeStatusModal();
+    }
+}
   </script>
 </body>
 </html>
