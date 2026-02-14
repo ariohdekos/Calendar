@@ -138,7 +138,7 @@
       <h3 style="margin-top:0;">Керування заняттям</h3>
       <p id="statusEventTitle" style="font-weight:bold; color:var(--admin-color); padding: 10px; background: #f8f9fa; border-radius: 8px;"></p>
 
-      <label style="font-size:12px; font-weight:bold; color:#666;">СТАТУС ВИКЛАДАЧА</label>
+      <label style="font-size:12px; font-weight:bold; color:#666;">ОБЕРІТЬ СТАТУС:</label>
       <select id="eventStatus" style="width:100%; padding:10px; margin:5px 0 15px 0; border: 1px solid #ddd; border-radius: 8px;">
           <option value="">🟢 Все за планом (Без мітки)</option>
           <option value="🏃 Запізнююсь (5-10 хв)">🏃 Запізнююсь (5-10 хв)</option>
@@ -149,8 +149,13 @@
 
       <div style="display:flex; gap:10px; margin-top:10px;">
         <button class="btn" style="background:#eee; color:#333;" onclick="closeStatusModal()">Закрити</button>
-        <button class="btn btn-primary" onclick="saveEventStatus()">Зберегти статус</button>
+        <button class="btn btn-primary" onclick="applyEventStatus()">Зберегти статус</button>
       </div>
+
+      <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+      <button class="btn btn-danger" id="btnDeleteEvent" style="display:none;" onclick="handleDeleteEvent()">🗑 Видалити запис</button>
+    </div>
+  </div>
 
       <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
       <button class="btn btn-danger" id="btnDeleteEvent" style="display:none;" onclick="deleteSelectedEvent()">🗑 Видалити запис</button>
