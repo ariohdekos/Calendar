@@ -249,27 +249,55 @@ window.handleDelete = () => {
 // ==========================================
 
 // Виправлено: функція перейменована, щоб відповідати HTML (onclick="updateAccessCode(...)")
-window.updateAccessCode = (level, newVal) => {
-    if(!newVal || newVal.length < 3) return alert("Код має бути мінімум 3 символи");
-    
-    const newUsers = {...USERS};
-    
-    // Видаляємо старий код цього рівня
-    for(let code in newUsers) {
-        if(newUsers[code].level === level) delete newUsers[code];
-    }
-    
-    const roles = { tech: "Технік", admin: "Адмін", teacher: "Викладач" };
-    const colors = { tech: "#6B7280", admin: "#4F46E5", teacher: "#10B981" };
-    
-    newUsers[newVal] = { role: roles[level], level: level, color: colors[level] };
+// ОНОВЛЕННЯ ПАРОЛІВ (Виправлено)
+window.updateAccessCode = (level) => {
+    // 1. Автоматично шукаємо поле вводу за ID (codeTech, codeAdmin, codeTeacher)
+    const inputId = 'code' + level.charAt(0).toUpperCase() + level.slice(1);
+    const inputEl = document.getElementById(inputId);
 
-    db.ref('users').set(newUsers)
-        .then(() => {
-            alert(`✅ Код для "${roles[level]}" оновлено на: ${newVal}`);
-            document.getElementById('code' + level.charAt(0).toUpperCase() + level.slice(1)).value = '';
-        })
-        .catch(e => alert("Помилка: " + e.message));
+    if (!inputEl) {
+        return alert(`Помилка: не знайдено поле вводу з ID "${inputId}". Перевірте HTML.`);
+    }
+
+    const newVal = inputEl.value.trim();
+
+    // Перевірка довжини пароля
+    if (!newVal || newVal.length < 3) {
+        return alert("Код має бути мінімум 3 символи!");
+    }
+
+    // 2. Безпечне оновлення в базі даних
+    db.ref('users').once('value').then(snap => {
+        const currentUsers = snap.val() || {};
+        const newUsers = { ...currentUsers };
+
+        // Видаляємо старий код для цієї ролі, щоб не дублювати
+        for (let code in newUsers) {
+            if (newUsers[code].level === level) delete newUsers[code];
+        }
+
+        // Налаштування для ролей
+        const roles = { tech: "Технік", admin: "Адмін", teacher: "Викладач" };
+        const colors = { tech: "#6B7280", admin: "#4F46E5", teacher: "#10B981" };
+
+        // Записуємо новий код
+        newUsers[newVal] = { 
+            role: roles[level], 
+            level: level, 
+            color: colors[level] 
+        };
+
+        // Зберігаємо в Firebase
+        return db.ref('users').set(newUsers);
+    })
+    .then(() => {
+        alert(`✅ Код для "${level}" змінено на: ${newVal}`);
+        inputEl.value = ''; // Очищаємо поле після успіху
+    })
+    .catch(e => {
+        console.error(e);
+        alert("Помилка: " + e.message);
+    });
 };
 
 window.saveTgSettings = () => {
