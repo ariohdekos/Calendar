@@ -136,3 +136,21 @@ td { padding: 12px; border-bottom: 1px solid #F3F4F6; }
 input:checked + .slider { background-color: var(--danger-color); }
 input:checked + .slider:before { transform: translateX(14px); }
 .switch-label { font-size: 12px; font-weight: 600; color: #6b7280; }
+/* Робимо технічні перерви помітними */
+.fc-bg-event {
+    opacity: 0.6 !important;
+    background: repeating-linear-gradient(
+        45deg,
+        #e5e7eb,
+        #e5e7eb 10px,
+        #d1d5db 10px,
+        #d1d5db 20px
+    ) !important;
+    z-index: 1 !important; /* Щоб не перекривало клітинки */
+}
+
+/* Звичайні події поверх технічних */
+.fc-event {
+    z-index: 5 !important;
+    cursor: pointer;
+}

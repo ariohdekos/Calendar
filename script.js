@@ -139,26 +139,45 @@ function syncAllData() {
     });
 
     // Уроки
-    db.ref('events').on('value', (snap) => {
-        const events = [];
-        const data = snap.val();
-        if (data) {
-            for(let id in data) events.push(data[id]);
-        }
-        if(calendar) {
-            calendar.removeAllEvents();
-            calendar.addEvents(events);
-            filterEvents();
-            updateStatusBar();
-        }
-    });
+    // ОНОВЛЕНА ФУНКЦІЯ ЗАВАНТАЖЕННЯ ПОДІЙ
+db.ref('events').on('value', (snapshot) => {
+    const data = snapshot.val();
+    let calendarEvents = [];
+    
+    if (data) {
+        Object.keys(data).forEach(key => {
+            const event = data[key];
+            
+            // Базова конфігурація події
+            let newEvent = {
+                id: key,
+                start: event.start, // Формат має бути 'YYYY-MM-DDTHH:mm'
+                end: event.end,
+                title: event.title || event.teacher, // Заголовок
+                extendedProps: { ...event } // Зберігаємо всі інші дані
+            };
 
-    // Вчителі (зберігаємо в глобальну змінну і малюємо)
-    db.ref('teachers').on('value', (snap) => {
-        currentTeachersList = snap.val() || ["Шевченко", "Коваленко"];
-        renderTeachersUI(currentTeachersList);
-    });
-}
+            // СПЕЦІАЛЬНА ОБРОБКА ТЕХНІЧНОЇ ПЕРЕРВИ
+            if (event.type === 'tech' || event.role === 'Технік') {
+                newEvent.display = 'background'; // Робить подію фоновою
+                newEvent.backgroundColor = '#d1d5db'; // Сірий колір
+                newEvent.classNames = ['tech-event']; // Клас для CSS
+            } else {
+                // Звичайні уроки
+                newEvent.backgroundColor = event.color || '#3788d8';
+                newEvent.textColor = '#ffffff';
+            }
+
+            calendarEvents.push(newEvent);
+        });
+    }
+
+    // Оновлюємо календар
+    if (calendar) {
+        calendar.removeAllEvents();
+        calendar.addEventSource(calendarEvents);
+    }
+});
 
 // ==========================================
 // 5. ЛОГІКА БРОНЮВАННЯ ТА ВИДАЛЕННЯ
