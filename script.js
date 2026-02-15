@@ -1,20 +1,19 @@
 // 1. КОНФІГУРАЦІЯ FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
-  authDomain: "liceum-eit-manager.firebaseapp.com",
-  databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "liceum-eit-manager",
-  storageBucket: "liceum-eit-manager.firebasestorage.app",
-  messagingSenderId: "854455059262",
-  appId: "1:854455059262:web:e6282bed63182559c5a26f",
-  measurementId: "G-NKS31DZ3MK"
+  apiKey: "ВАШ_REAL_API_KEY", // Залиште тут свій реальний ключ
+  authDomain: "liceum-eit-manager.firebaseapp.com",
+  databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "liceum-eit-manager",
+  storageBucket: "liceum-eit-manager.firebasestorage.app",
+  messagingSenderId: "854455059262",
+  appId: "1:854455059262:web:e6282bed63182559c5a26f"
 };
 
 // Ініціалізація
 try {
     firebase.initializeApp(firebaseConfig);
 } catch (e) {
-    console.error("Помилка підключення Firebase:", e);
+    console.error("Помилка Firebase:", e);
 }
 const db = firebase.database();
 
@@ -26,14 +25,14 @@ let selectedSlot = null;
 let clickedEvent = null;
 let activeFilter = null;
 let reportChartInstance = null;
+let currentTeachersList = []; // Додано для збереження списку
 
 // ==========================================
-// 2. ВХІД / ВИХІД ТА ЗАПУСК
+// 2. ВХІД / ВИХІД
 // ==========================================
 
-// Функція входу (була відсутня)
 window.tryLogin = () => {
-    const pass = document.getElementById('passInput').value;
+    const pass = document.getElementById('passInput').value.trim();
     if (USERS[pass]) {
         currentUser = USERS[pass];
         sessionStorage.setItem('st_token', pass);
@@ -43,35 +42,35 @@ window.tryLogin = () => {
     }
 };
 
-// Функція виходу (була відсутня)
 window.logout = () => {
     sessionStorage.removeItem('st_token');
     location.reload();
 };
 
-// Запуск інтерфейсу (була відсутня)
 function startApp() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('topBar').style.display = 'flex';
     document.getElementById('statusBar').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'grid'; // Важливо для CSS Grid
+    document.getElementById('mainApp').style.display = 'grid';
     
-    // Оновлення бейджа користувача
+    // Бейдж ролі
     const badge = document.getElementById('roleBadge');
     badge.textContent = currentUser.role;
     badge.style.background = currentUser.color;
 
-    // Показуємо панель техніка тільки техніку
+    // Панель техніка
     const tgPanel = document.getElementById('tgPanel');
     if(tgPanel) tgPanel.style.display = (currentUser.level === 'tech') ? 'block' : 'none';
 
-    // Завантажуємо налаштування TG, якщо це технік
     if(currentUser.level === 'tech') {
         document.getElementById('tgToken').value = localStorage.getItem('st_tg_token') || '';
         document.getElementById('tgChatId').value = localStorage.getItem('st_tg_chat') || '';
     }
 
     initCalendar();
+    
+    // ВАЖЛИВО: Оновлюємо список вчителів вже з правами доступу (щоб з'явилися хрестики)
+    renderTeachersUI(currentTeachersList);
 }
 
 // ==========================================
@@ -88,7 +87,6 @@ function initCalendar() {
         allDaySlot: false,
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' },
         
-        // Клік на існуючу подію
         eventClick: (info) => {
             clickedEvent = info.event;
             const props = clickedEvent.extendedProps;
@@ -97,7 +95,7 @@ function initCalendar() {
             document.getElementById('statusTeacherName').textContent = props.teacher || "—";
             document.getElementById('eventStatus').value = props.status || "";
             
-            // Логіка показу кнопки видалення (15 хв або адмін)
+            // Логіка кнопки видалення уроку
             const diff = (Date.now() - (props.createdAt || 0)) / 1000 / 60;
             const isCreator = props.creator === sessionStorage.getItem('st_token');
             const canDelete = currentUser.level === 'admin' || currentUser.level === 'tech' || (isCreator && diff <= 15);
@@ -108,7 +106,6 @@ function initCalendar() {
             document.getElementById('statusModalOverlay').style.display = 'flex';
         },
 
-        // Виділення часу для нового запису
         select: (info) => {
             selectedSlot = info;
             const startStr = info.startStr.split('T')[1].substring(0,5);
@@ -117,7 +114,6 @@ function initCalendar() {
             document.getElementById('startTimeInput').value = startStr;
             document.getElementById('endTimeInput').value = endStr;
             
-            // Тільки технік і адмін бачать опцію блокування
             const adminOpts = document.getElementById('adminBlockOptions');
             if(adminOpts) adminOpts.style.display = (currentUser.level !== 'teacher') ? 'block' : 'none';
             
@@ -125,16 +121,14 @@ function initCalendar() {
         }
     });
     calendar.render();
-    
-    // Примусове оновлення розміру, щоб календар не був "сплюснутим"
     setTimeout(() => calendar.updateSize(), 200);
 }
 
 // ==========================================
-// 4. СИНХРОНІЗАЦІЯ ДАНИХ (Real-time)
+// 4. СИНХРОНІЗАЦІЯ ДАНИХ
 // ==========================================
 function syncAllData() {
-    // 1. Користувачі
+    // Користувачі
     db.ref('users').on('value', (snap) => {
         USERS = snap.val() || {
             "777": { role: "Технік", level: "tech", color: "#6B7280" },
@@ -143,7 +137,7 @@ function syncAllData() {
         };
     });
 
-    // 2. Уроки
+    // Уроки
     db.ref('events').on('value', (snap) => {
         const events = [];
         const data = snap.val();
@@ -153,20 +147,20 @@ function syncAllData() {
         if(calendar) {
             calendar.removeAllEvents();
             calendar.addEvents(events);
-            filterEvents(); // Застосувати фільтр, якщо він активний
+            filterEvents();
             updateStatusBar();
         }
     });
 
-    // 3. Вчителі
+    // Вчителі (зберігаємо в глобальну змінну і малюємо)
     db.ref('teachers').on('value', (snap) => {
-        const list = snap.val() || ["Шевченко", "Коваленко"];
-        renderTeachersUI(list);
+        currentTeachersList = snap.val() || ["Шевченко", "Коваленко"];
+        renderTeachersUI(currentTeachersList);
     });
 }
 
 // ==========================================
-// 5. ЛОГІКА БРОНЮВАННЯ ТА РЕДАГУВАННЯ
+// 5. ЛОГІКА БРОНЮВАННЯ ТА ВИДАЛЕННЯ
 // ==========================================
 window.confirmBooking = () => {
     if (!selectedSlot) return alert("Помилка: час не вибрано");
@@ -178,7 +172,6 @@ window.confirmBooking = () => {
     const eventId = "ev_" + Date.now();
 
     let eventData;
-
     if (isBlock) {
         eventData = {
             id: eventId, title: "⛔ ТЕХНІЧНА ПЕРЕРВА", start, end,
@@ -191,7 +184,7 @@ window.confirmBooking = () => {
         const sClass = document.getElementById('eventClass').value;
         const color = document.getElementById('eventColor').value;
         
-        if(!title || !sClass) return alert("Заповніть назву предмету та клас!");
+        if(!title || !sClass) return alert("Заповніть назву та клас!");
 
         eventData = {
             id: eventId, title: `${title} | ${sClass} | ${teacher}`, start, end,
@@ -201,12 +194,9 @@ window.confirmBooking = () => {
                 count: document.getElementById('eventCount').value || 1,
                 createdAt: Date.now(), 
                 creator: sessionStorage.getItem('st_token'),
-                baseTitle: title, 
-                baseColor: color
+                baseTitle: title, baseColor: color
             }
         };
-        
-        // Відправка в Telegram
         sendTelegram(`✅ <b>Новий запис:</b> ${title}\n🏫 Клас: ${sClass}\n👨‍🏫 ${teacher}\n🕒 ${start.split('T')[1]} - ${end.split('T')[1]}`);
     }
     
@@ -232,12 +222,11 @@ window.applyStatus = () => {
         borderColor: finalColor,
         "extendedProps/status": newStatus
     });
-    
     closeStatusModal();
 };
 
 window.handleDelete = () => {
-    if (clickedEvent && confirm("Видалити запис?")) {
+    if (clickedEvent && confirm("Видалити урок?")) {
         db.ref('events/' + clickedEvent.id).remove();
         sendTelegram(`🗑 <b>Видалено урок:</b> ${clickedEvent.extendedProps.baseTitle}`);
         closeStatusModal();
@@ -245,145 +234,30 @@ window.handleDelete = () => {
 };
 
 // ==========================================
-// 6. НАЛАШТУВАННЯ ТА АДМІНКА
+// 6. НАЛАШТУВАННЯ ТА ВЧИТЕЛІ
 // ==========================================
 
-// Виправлено: функція перейменована, щоб відповідати HTML (onclick="updateAccessCode(...)")
-// ОНОВЛЕННЯ ПАРОЛІВ (Виправлено)
-// ОНОВЛЕННЯ ПАРОЛІВ (Виправлено під твій HTML)
 window.updateAccessCode = (level, valFromHtml) => {
-    // 1. Беремо значення прямо з кнопки (так надійніше)
     const newVal = valFromHtml ? valFromHtml.trim() : "";
+    if (!newVal || newVal.length < 3) return alert("Код має бути мінімум 3 символи!");
 
-    // Перевірка
-    if (!newVal || newVal.length < 3) {
-        return alert("Код має бути мінімум 3 символи!");
-    }
-
-    // 2. Оновлюємо в базі
     db.ref('users').once('value').then(snap => {
         const currentUsers = snap.val() || {};
         const newUsers = { ...currentUsers };
-
-        // Видаляємо старий код для цієї ролі
+        
         for (let code in newUsers) {
-            // Додаткова перевірка, щоб код не впав, якщо в базі сміття
-            if (newUsers[code] && newUsers[code].level === level) {
-                delete newUsers[code];
-            }
+            if (newUsers[code] && newUsers[code].level === level) delete newUsers[code];
         }
 
-        // Налаштування ролей
         const roles = { tech: "Технік", admin: "Адмін", teacher: "Викладач" };
         const colors = { tech: "#6B7280", admin: "#4F46E5", teacher: "#10B981" };
 
-        // Записуємо новий код
-        newUsers[newVal] = { 
-            role: roles[level], 
-            level: level, 
-            color: colors[level] 
-        };
-
+        newUsers[newVal] = { role: roles[level], level: level, color: colors[level] };
         return db.ref('users').set(newUsers);
-    })
-    .then(() => {
-        alert(`✅ Код для "${level}" змінено на: ${newVal}`);
-        
-        // Очищаємо поле вводу візуально
-        const inputId = 'code' + level.charAt(0).toUpperCase() + level.slice(1);
-        const inputEl = document.getElementById(inputId);
-        if(inputEl) inputEl.value = ''; 
-    })
-    .catch(e => {
-        console.error(e);
-        alert("Помилка: " + e.message);
-    });
-};
-
-window.saveTgSettings = () => {
-    localStorage.setItem('st_tg_token', document.getElementById('tgToken').value);
-    localStorage.setItem('st_tg_chat', document.getElementById('tgChatId').value);
-    alert("Налаштування Telegram збережено локально!");
-};
-
-async function sendTelegram(msg) {
-    const t = localStorage.getItem('st_tg_token');
-    const c = localStorage.getItem('st_tg_chat');
-    if(t && c) {
-        try {
-            await fetch(`https://api.telegram.org/bot${t}/sendMessage?chat_id=${c}&text=${encodeURIComponent(msg)}&parse_mode=HTML`);
-        } catch(e) { console.error("TG Error", e); }
-    }
-}
-
-// ==========================================
-// 7. UI HELPER FUNCTIONS (Були відсутні)
-// ==========================================
-
-window.closeModal = () => { 
-    document.getElementById('modalOverlay').style.display = 'none'; 
-    if(calendar) calendar.unselect(); 
-};
-
-window.closeStatusModal = () => { 
-    document.getElementById('statusModalOverlay').style.display = 'none'; 
-    clickedEvent = null; 
-};
-
-window.toggleBlockUI = (isChecked) => {
-    document.getElementById('bookingFields').style.display = isChecked ? 'none' : 'block';
-};
-
-// Рендер списку вчителів
-// 1. ОНОВЛЕНА ФУНКЦІЯ ВІДОБРАЖЕННЯ (Заміни стару renderTeachersUI на цю)
-function renderTeachersUI(list) {
-    const tList = document.getElementById('teacherList'); // Список у сайдбарі
-    const tSelect = document.getElementById('eventTeacher'); // Випадаючий список у модалці
-    const fList = document.getElementById('filterList'); // Кнопки фільтрів зверху
-
-    // Перевіряємо, чи має право користувач видаляти (Адмін або Технік)
-    const canDelete = currentUser && (currentUser.level === 'admin' || currentUser.level === 'tech');
-
-    // Рендер списку в налаштуваннях з кнопкою видалення
-    if (tList) {
-        tList.innerHTML = list.map(t => `
-            <div class="teacher-item" style="display: flex; justify-content: space-between; align-items: center;">
-                <span>👤 ${t}</span>
-                ${canDelete ? `<span onclick="deleteTeacher('${t}')" style="cursor:pointer; color:#EF4444; font-weight:bold; padding: 0 5px;" title="Видалити">✕</span>` : ''}
-            </div>
-        `).join('');
-    }
-
-    // Рендер випадаючого списку (тут видаляти не можна, тільки вибирати)
-    if (tSelect) {
-        tSelect.innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
-    }
-    
-    // Рендер фільтрів (кнопки зверху)
-    if (fList) {
-        fList.innerHTML = list.map(t => `
-            <div class="filter-item ${activeFilter === t ? 'active' : ''}" onclick="toggleFilter('${t}')">${t}</div>
-        `).join('');
-    }
-}
-
-// 2. НОВА ФУНКЦІЯ ВИДАЛЕННЯ (Додай її в будь-яке місце в script.js, наприклад після addTeacher)
-window.deleteTeacher = (name) => {
-    if (!confirm(`Ви впевнені, що хочете видалити викладача "${name}" зі списку?`)) return;
-
-    db.ref('teachers').once('value').then(snap => {
-        const list = snap.val() || [];
-        // Фільтруємо список, залишаючи всіх, окрім видаленого
-        const newList = list.filter(t => t !== name);
-        
-        // Зберігаємо оновлений список у Firebase
-        db.ref('teachers').set(newList);
-        
-        // Якщо цей викладач був активним фільтром - скидаємо фільтр
-        if (activeFilter === name) {
-            activeFilter = null;
-            filterEvents();
-        }
+    }).then(() => {
+        alert(`✅ Код оновлено!`);
+        const el = document.getElementById('code' + level.charAt(0).toUpperCase() + level.slice(1));
+        if(el) el.value = '';
     });
 };
 
@@ -398,19 +272,88 @@ window.addTeacher = () => {
     });
 };
 
+// !!! ФУНКЦІЯ ВИДАЛЕННЯ ВЧИТЕЛЯ !!!
+window.deleteTeacher = (name) => {
+    if (!confirm(`Видалити викладача "${name}"?`)) return;
+    db.ref('teachers').once('value').then(snap => {
+        const list = snap.val() || [];
+        const newList = list.filter(t => t !== name);
+        db.ref('teachers').set(newList);
+        
+        if (activeFilter === name) {
+            activeFilter = null;
+            filterEvents();
+        }
+    });
+};
+
+function renderTeachersUI(list) {
+    const tList = document.getElementById('teacherList');
+    const tSelect = document.getElementById('eventTeacher');
+    const fList = document.getElementById('filterList');
+
+    // Перевірка прав (тільки адмін/технік бачить хрестик)
+    const canDelete = currentUser && (currentUser.level === 'admin' || currentUser.level === 'tech');
+
+    if (tList) {
+        tList.innerHTML = list.map(t => `
+            <div class="teacher-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 8px; background: #f9fafb; border-radius: 8px;">
+                <span>👤 ${t}</span>
+                ${canDelete ? `<span onclick="deleteTeacher('${t}')" style="cursor:pointer; color:#EF4444; font-weight:bold; padding: 0 8px; font-size: 16px;">✕</span>` : ''}
+            </div>
+        `).join('');
+    }
+
+    if (tSelect) {
+        // У списку вибору при створенні уроку видаляти не можна
+        tSelect.innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
+    }
+    
+    if (fList) {
+        fList.innerHTML = list.map(t => `
+            <div class="filter-item ${activeFilter === t ? 'active' : ''}" onclick="toggleFilter('${t}')">${t}</div>
+        `).join('');
+    }
+}
+
+// ==========================================
+// 7. ДОПОМІЖНІ ФУНКЦІЇ
+// ==========================================
+window.closeModal = () => { 
+    document.getElementById('modalOverlay').style.display = 'none'; 
+    if(calendar) calendar.unselect(); 
+};
+window.closeStatusModal = () => { 
+    document.getElementById('statusModalOverlay').style.display = 'none'; 
+    clickedEvent = null; 
+};
+window.toggleBlockUI = (isChecked) => {
+    document.getElementById('bookingFields').style.display = isChecked ? 'none' : 'block';
+};
+
+window.saveTgSettings = () => {
+    localStorage.setItem('st_tg_token', document.getElementById('tgToken').value);
+    localStorage.setItem('st_tg_chat', document.getElementById('tgChatId').value);
+    alert("Налаштування збережено!");
+};
+
+async function sendTelegram(msg) {
+    const t = localStorage.getItem('st_tg_token');
+    const c = localStorage.getItem('st_tg_chat');
+    if(t && c) fetch(`https://api.telegram.org/bot${t}/sendMessage?chat_id=${c}&text=${encodeURIComponent(msg)}&parse_mode=HTML`);
+}
+
 // Фільтри
 window.toggleFilter = (name) => {
     activeFilter = (activeFilter === name) ? null : name;
     filterEvents();
-    // Оновлюємо візуальний стан кнопок
-    const list = JSON.parse(JSON.stringify(document.getElementById('eventTeacher').innerHTML)); // хак щоб взяти список
-    db.ref('teachers').once('value', snap => renderTeachersUI(snap.val() || []));
+    renderTeachersUI(currentTeachersList); // Оновлюємо візуально (активний клас)
 };
 
 window.resetFilters = () => {
     activeFilter = null;
     filterEvents();
-    db.ref('teachers').once('value', snap => renderTeachersUI(snap.val() || []));
+    renderTeachersUI(currentTeachersList);
 };
 
 function filterEvents() {
@@ -443,16 +386,35 @@ function updateStatusBar() {
 }
 
 // Звітність
+// ==========================================
+// ЗВІТНІСТЬ ТА ЕКСПОРТ
+// ==========================================
+
 window.openReport = () => {
+    // 1. Збираємо дані
     const events = calendar.getEvents().filter(e => e.extendedProps && e.extendedProps.type === 'lesson');
     let totalLessons = 0;
     const stats = {};
     
-    let html = `<table><thead><tr><th>Дата</th><th>Вчитель</th><th>Предмет</th><th>Уроків</th></tr></thead><tbody>`;
+    // Початок HTML (додаємо кнопку експорту зверху)
+    let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin:0;">Статистика</h3>
+            <button onclick="downloadCSV()" style="padding: 8px 16px; background: #10B981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                📥 Скачати Excel
+            </button>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Дата</th><th>Вчитель</th><th>Предмет</th><th>Уроків</th></tr>
+            </thead>
+            <tbody>
+    `;
     
+    // 2. Формуємо рядки таблиці
     events.forEach(e => {
         const p = e.extendedProps;
-        if (p.status === "❌ Скасовано") return;
+        if (p.status === "❌ Скасовано") return; // Не рахуємо скасовані
 
         const count = parseInt(p.count) || 1;
         totalLessons += count;
@@ -468,10 +430,11 @@ window.openReport = () => {
     
     html += `<tr style="background:#f3f4f6; font-weight:bold;"><td colspan="3">РАЗОМ:</td><td>${totalLessons}</td></tr></tbody></table>`;
     
+    // 3. Виводимо на екран
     document.getElementById('reportResult').innerHTML = html;
     document.getElementById('reportOverlay').style.display = 'flex';
     
-    // Графік
+    // 4. Малюємо графік
     setTimeout(() => {
         const ctx = document.getElementById('reportChart').getContext('2d');
         if (reportChartInstance) reportChartInstance.destroy();
@@ -492,6 +455,36 @@ window.openReport = () => {
     }, 100);
 };
 
+// НОВА ФУНКЦІЯ ЕКСПОРТУ (Додай її відразу після openReport)
+window.downloadCSV = () => {
+    const events = calendar.getEvents().filter(e => e.extendedProps && e.extendedProps.type === 'lesson');
+    
+    // Додаємо BOM (\uFEFF), щоб Excel коректно читав кирилицю
+    let csvContent = "\uFEFFДата,Вчитель,Предмет,Клас,Кількість,Статус\n";
+
+    events.forEach(e => {
+        const p = e.extendedProps;
+        // Якщо хочеш експортувати і скасовані, прибери цей if
+        if (p.status === "❌ Скасовано") return; 
+
+        const date = e.start.toLocaleDateString();
+        // Екрануємо коми в назвах, щоб таблиця не поїхала
+        const title = (p.baseTitle || "").replace(/,/g, " ");
+        
+        const row = `${date},${p.teacher},${title},${p.sClass},${p.count || 1},${p.status || "Проведено"}`;
+        csvContent += row + "\n";
+    });
+
+    // Створення посилання для скачування
+    const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Звіт_Liceum_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 window.closeReport = () => document.getElementById('reportOverlay').style.display = 'none';
 
 // ==========================================
@@ -499,9 +492,7 @@ window.closeReport = () => document.getElementById('reportOverlay').style.displa
 // ==========================================
 syncAllData();
 
-// Перевірка сесії при старті
 if (sessionStorage.getItem('st_token')) {
-    // Чекаємо трохи, щоб USERS завантажились з бази
     setTimeout(() => {
         const token = sessionStorage.getItem('st_token');
         if(USERS[token]) {
