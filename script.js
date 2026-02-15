@@ -250,33 +250,30 @@ window.handleDelete = () => {
 
 // Виправлено: функція перейменована, щоб відповідати HTML (onclick="updateAccessCode(...)")
 // ОНОВЛЕННЯ ПАРОЛІВ (Виправлено)
-window.updateAccessCode = (level) => {
-    // 1. Автоматично шукаємо поле вводу за ID (codeTech, codeAdmin, codeTeacher)
-    const inputId = 'code' + level.charAt(0).toUpperCase() + level.slice(1);
-    const inputEl = document.getElementById(inputId);
+// ОНОВЛЕННЯ ПАРОЛІВ (Виправлено під твій HTML)
+window.updateAccessCode = (level, valFromHtml) => {
+    // 1. Беремо значення прямо з кнопки (так надійніше)
+    const newVal = valFromHtml ? valFromHtml.trim() : "";
 
-    if (!inputEl) {
-        return alert(`Помилка: не знайдено поле вводу з ID "${inputId}". Перевірте HTML.`);
-    }
-
-    const newVal = inputEl.value.trim();
-
-    // Перевірка довжини пароля
+    // Перевірка
     if (!newVal || newVal.length < 3) {
         return alert("Код має бути мінімум 3 символи!");
     }
 
-    // 2. Безпечне оновлення в базі даних
+    // 2. Оновлюємо в базі
     db.ref('users').once('value').then(snap => {
         const currentUsers = snap.val() || {};
         const newUsers = { ...currentUsers };
 
-        // Видаляємо старий код для цієї ролі, щоб не дублювати
+        // Видаляємо старий код для цієї ролі
         for (let code in newUsers) {
-            if (newUsers[code].level === level) delete newUsers[code];
+            // Додаткова перевірка, щоб код не впав, якщо в базі сміття
+            if (newUsers[code] && newUsers[code].level === level) {
+                delete newUsers[code];
+            }
         }
 
-        // Налаштування для ролей
+        // Налаштування ролей
         const roles = { tech: "Технік", admin: "Адмін", teacher: "Викладач" };
         const colors = { tech: "#6B7280", admin: "#4F46E5", teacher: "#10B981" };
 
@@ -287,12 +284,15 @@ window.updateAccessCode = (level) => {
             color: colors[level] 
         };
 
-        // Зберігаємо в Firebase
         return db.ref('users').set(newUsers);
     })
     .then(() => {
         alert(`✅ Код для "${level}" змінено на: ${newVal}`);
-        inputEl.value = ''; // Очищаємо поле після успіху
+        
+        // Очищаємо поле вводу візуально
+        const inputId = 'code' + level.charAt(0).toUpperCase() + level.slice(1);
+        const inputEl = document.getElementById(inputId);
+        if(inputEl) inputEl.value = ''; 
     })
     .catch(e => {
         console.error(e);
