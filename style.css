@@ -52,9 +52,8 @@ th { text-align: left; background: #F9FAFB; padding: 12px; color: #6B7280; font-
 td { padding: 12px; border-bottom: 1px solid #F3F4F6; }
 
 .filter-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.filter-item { padding: 6px 12px; background: #f3f4f6; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 600; }
-.filter-item.active { background: #E0E7FF; color: var(--admin-color); }
 
+/* Виправлені фільтри (об'єднані стилі) */
 .filter-item {
   padding: 8px 12px;
   background: #f3f4f6;
@@ -64,6 +63,7 @@ td { padding: 12px; border-bottom: 1px solid #F3F4F6; }
   transition: 0.2s;
   font-weight: 600;
   border: 1px solid transparent;
+  margin-bottom: 5px;
 }
 .filter-item:hover { background: #E5E7EB; }
 .filter-item.active {
@@ -71,25 +71,12 @@ td { padding: 12px; border-bottom: 1px solid #F3F4F6; }
   color: #4F46E5;
   border-color: #4F46E5;
 }
+
 @media (max-width: 768px) {
   .container { grid-template-columns: 1fr; }
   #topBar .brand { font-size: 14px; }
 }
-.filter-item {
-  padding: 8px 12px;
-  background: #f3f4f6;
-  border-radius: 10px;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 600;
-  margin-bottom: 5px;
-  border: 1px solid transparent;
-}
-.filter-item.active {
-  background: #EEF2FF;
-  color: #4F46E5;
-  border-color: #4F46E5;
-}
+
 .teacher-item {
   font-size: 13px;
   padding: 8px;
@@ -97,14 +84,6 @@ td { padding: 12px; border-bottom: 1px solid #F3F4F6; }
   border-radius: 8px;
   margin-bottom: 5px;
 }
-.table-wrapper {
-  overflow-x: auto;
-  border: 1px solid #eee;
-  border-radius: 12px;
-}
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-th { background: #f9fafb; color: #666; }
 
 /* Контейнер модалки */
 .modern-modal {
@@ -125,9 +104,7 @@ th { background: #f9fafb; color: #666; }
 }
 
 .modal-header h3 { margin: 0; font-size: 18px; }
-
 .modal-body { padding: 20px 24px; }
-
 .modal-footer {
   padding: 16px 24px;
   background: #fcfcfd;
@@ -136,14 +113,7 @@ th { background: #f9fafb; color: #666; }
   gap: 12px;
 }
 
-/* Сітка для полів */
-.input-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
+.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
 .input-group { margin-bottom: 15px; }
 .input-group label {
   font-size: 12px;
@@ -153,50 +123,16 @@ th { background: #f9fafb; color: #666; }
   display: block;
 }
 
-/* Компактний вибір кольору */
-.compact-color {
-  width: 45px !important;
-  height: 45px !important;
-  padding: 2px !important;
-  border-radius: 10px !important;
-  cursor: pointer;
-}
+.compact-color { width: 45px !important; height: 45px !important; padding: 2px !important; border-radius: 10px !important; cursor: pointer; }
 
-/* Стилізація кнопок */
-.btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
-}
+.btn-secondary { background: #f3f4f6; color: #374151; }
 .btn-secondary:hover { background: #e5e7eb; }
 
 /* Кастомний Switch (Toggle) */
-.switch {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
+.switch { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 .switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-  position: relative;
-  width: 34px;
-  height: 20px;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 34px;
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
+.slider { position: relative; width: 34px; height: 20px; background-color: #ccc; transition: .4s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
 input:checked + .slider { background-color: var(--danger-color); }
 input:checked + .slider:before { transform: translateX(14px); }
 .switch-label { font-size: 12px; font-weight: 600; color: #6b7280; }
