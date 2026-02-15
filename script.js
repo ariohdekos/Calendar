@@ -392,12 +392,11 @@ function updateStatusBar() {
 // ==========================================
 
 window.openReport = () => {
-    // 1. Збираємо дані
     const events = calendar.getEvents().filter(e => e.extendedProps && e.extendedProps.type === 'lesson');
     let totalLessons = 0;
     const stats = {};
     
-    // Початок HTML (додаємо кнопку експорту зверху)
+    // Формуємо шапку таблиці та кнопку
     let html = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h3 style="margin:0;">Статистика</h3>
@@ -412,10 +411,10 @@ window.openReport = () => {
             <tbody>
     `;
     
-    // 2. Формуємо рядки таблиці
+    // Наповнюємо рядками
     events.forEach(e => {
         const p = e.extendedProps;
-        if (p.status === "❌ Скасовано") return; // Не рахуємо скасовані
+        if (p.status === "❌ Скасовано") return; 
 
         const count = parseInt(p.count) || 1;
         totalLessons += count;
@@ -431,11 +430,11 @@ window.openReport = () => {
     
     html += `<tr style="background:#f3f4f6; font-weight:bold;"><td colspan="3">РАЗОМ:</td><td>${totalLessons}</td></tr></tbody></table>`;
     
-    // 3. Виводимо на екран
+    // ВСТАВЛЯЄМО ТАБЛИЦЮ У ВІКНО
     document.getElementById('reportResult').innerHTML = html;
     document.getElementById('reportOverlay').style.display = 'flex';
     
-    // 4. Малюємо графік
+    // Малюємо графік
     setTimeout(() => {
         const ctx = document.getElementById('reportChart').getContext('2d');
         if (reportChartInstance) reportChartInstance.destroy();

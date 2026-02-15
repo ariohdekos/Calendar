@@ -136,3 +136,27 @@ td { padding: 12px; border-bottom: 1px solid #F3F4F6; }
 input:checked + .slider { background-color: var(--danger-color); }
 input:checked + .slider:before { transform: translateX(14px); }
 .switch-label { font-size: 12px; font-weight: 600; color: #6b7280; }
+/* --- СТИЛІ ДЛЯ ТАБЛИЦІ ЗВІТУ --- */
+#reportResult table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+#reportResult th, 
+#reportResult td {
+  padding: 10px;
+  border: 1px solid #e5e7eb; /* Сірі рамки */
+  text-align: left;
+  color: #1F2937; /* Темно-сірий текст */
+}
+
+#reportResult th {
+  background-color: #f9fafb; /* Світлий фон заголовка */
+  font-weight: 600;
+}
+
+#reportResult tr:hover {
+  background-color: #f3f4f6; /* Підсвітка рядка при наведенні */
+}
