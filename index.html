@@ -37,13 +37,27 @@
         📖 Інструкція
       </button>
       <details id="tgPanel" class="sidebar-panel" style="display:none; border-left: 4px solid #0088cc;">
-        <summary>✈️ Налаштування Telegram</summary>
+        <summary>✈️ Налаштування Техніка</summary>
         <div class="panel-content">
           <label>BOT TOKEN</label>
           <input type="password" id="tgToken">
           <label>CHAT ID</label>
           <input type="text" id="tgChatId">
-          <button class="btn btn-primary" onclick="saveTgSettings()">Зберегти</button>
+          <button class="btn btn-primary" onclick="saveTgSettings()">Зберегти TG</button>
+          
+          <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+          
+          <label>🔑 Код Техніка (зараз: 777)</label>
+          <input type="text" id="codeTech" placeholder="Новий код">
+          <button class="btn btn-light" onclick="updateAccessCode('tech', document.getElementById('codeTech').value)">Оновити</button>
+          
+          <label style="margin-top:10px;">🔑 Код Адміна (зараз: 888)</label>
+          <input type="text" id="codeAdmin" placeholder="Новий код">
+          <button class="btn btn-light" onclick="updateAccessCode('admin', document.getElementById('codeAdmin').value)">Оновити</button>
+          
+          <label style="margin-top:10px;">🔑 Код Викладача (зараз: 999)</label>
+          <input type="text" id="codeTeacher" placeholder="Новий код">
+          <button class="btn btn-light" onclick="updateAccessCode('teacher', document.getElementById('codeTeacher').value)">Оновити</button>
         </div>
       </details>
 

@@ -1,7 +1,26 @@
-const USERS = {
+// Завантажуємо коди з пам'яті або використовуємо стандартні при першому запуску
+const DEFAULT_USERS = {
     "777": { role: "Технік", level: "tech", color: "#6B7280" },
     "888": { role: "Адмін", level: "admin", color: "#4F46E5" },
     "999": { role: "Викладач", level: "teacher", color: "#10B981" }
+};
+
+let USERS = JSON.parse(localStorage.getItem('st_users')) || DEFAULT_USERS;
+
+// Функція для оновлення кодів (тільки для Техніка)
+window.updateAccessCode = (level, newCode) => {
+    if (!newCode || newCode.length < 3) return alert("Код занадто короткий!");
+    
+    // Знаходимо старий код за рівнем доступу і видаляємо його
+    const oldCode = Object.keys(USERS).find(code => USERS[code].level === level);
+    const userData = USERS[oldCode];
+    
+    delete USERS[oldCode];
+    USERS[newCode] = userData;
+    
+    localStorage.setItem('st_users', JSON.stringify(USERS));
+    alert(`Код для ${userData.role} змінено на: ${newCode}`);
+    location.reload(); // Перезавантажуємо для активації
 };
 
 let currentUser = null;
