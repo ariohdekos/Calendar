@@ -7,79 +7,48 @@
   --bg-color: #F3F4F6;
 }
 
-body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-color); color: #1F2937; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-color); color: #1F2937; }
 
 /* Вхід */
 #loginScreen { position: fixed; inset: 0; background: #1F2937; display: flex; align-items: center; justify-content: center; z-index: 5000; }
-.login-box { background: white; padding: 40px; border-radius: 24px; width: 320px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+.login-box { background: white; padding: 40px; border-radius: 24px; width: 320px; text-align: center; }
 
-/* Панель керування */
+/* Панель */
 #topBar { position: fixed; top: 0; width: 100%; height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 2000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); box-sizing: border-box; }
 .brand { font-weight: 800; color: var(--admin-color); font-size: 18px; }
 .badge { padding: 6px 14px; border-radius: 20px; color: white; font-size: 12px; font-weight: 600; }
 .btn-logout { background: none; border: 1px solid #ddd; padding: 5px 12px; border-radius: 8px; cursor: pointer; }
 
-#statusBar { margin: 75px auto 15px; max-width: 1200px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+#statusBar { margin: 75px auto 15px; max-width: 1200px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; }
 
 .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 300px; gap: 20px; padding: 0 15px 50px; }
 
-#calendar { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+#calendar { background: white; padding: 20px; border-radius: 20px; }
 
 /* Сайдбар */
-.sidebar-panel { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; overflow: hidden; border: 1px solid #eee; }
-details summary { padding: 15px 20px; font-weight: 700; cursor: pointer; border-bottom: 1px solid #f3f4f6; list-style: none; outline: none; }
+.sidebar-panel { background: white; border-radius: 16px; margin-bottom: 15px; overflow: hidden; border: 1px solid #eee; }
+details summary { padding: 15px 20px; font-weight: 700; cursor: pointer; border-bottom: 1px solid #f3f4f6; list-style: none; }
 .panel-content { padding: 15px 20px; }
-h4 { padding: 0 0 10px; margin: 0; font-size: 14px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
+h4 { padding: 0 0 10px; margin: 0; font-size: 14px; color: #6B7280; text-transform: uppercase; }
 
-.btn { padding: 12px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.2s; font-family: inherit; }
+.btn { padding: 12px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; margin-bottom: 5px; }
 .btn-primary { background: var(--admin-color); color: white; }
 .btn-success { background: var(--teacher-color); color: white; }
 .btn-danger { background: var(--danger-color); color: white; }
 .btn-light { background: #F3F4F6; color: #374151; }
 
-/* Форми */
-input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #E5E7EB; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #E5E7EB; border-radius: 10px; box-sizing: border-box; }
 label { font-size: 11px; font-weight: 700; color: #6B7280; margin-bottom: 4px; display: block; text-transform: uppercase; }
 
 /* Модалки */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(6px); padding: 15px; }
-.modal-content { background: white; padding: 30px; border-radius: 24px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(4px); padding: 15px; }
+.modal-content { background: white; padding: 30px; border-radius: 24px; width: 100%; max-width: 450px; }
 
 .filter-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.filter-item { padding: 8px 12px; background: #f3f4f6; border-radius: 10px; font-size: 13px; cursor: pointer; }
+.filter-item.active { background: #EEF2FF; color: #4F46E5; }
 
-.filter-item {
-  padding: 8px 12px;
-  background: #f3f4f6;
-  border-radius: 10px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: 0.2s;
-  font-weight: 600;
-  border: 1px solid transparent;
-}
-.filter-item:hover { background: #E5E7EB; }
-.filter-item.active {
-  background: #EEF2FF;
-  color: #4F46E5;
-  border-color: #4F46E5;
-}
-
-.teacher-item {
-  font-size: 14px;
-  padding: 10px;
-  background: #f9fafb;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  border: 1px solid #f3f4f6;
-}
-
-@media (max-width: 768px) {
-  .container { grid-template-columns: 1fr; }
-  #topBar .brand { font-size: 14px; }
-}
-
-/* Модалки */
-.modern-modal { width: 420px !important; padding: 0 !important; overflow: hidden; border-radius: 20px !important; border: 1px solid rgba(0,0,0,0.05); }
+.modern-modal { width: 420px !important; padding: 0 !important; overflow: hidden; }
 .modal-header { padding: 20px 24px; background: #fcfcfd; border-bottom: 1px solid #f1f1f4; display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { margin: 0; font-size: 18px; }
 .modal-body { padding: 20px 24px; }
@@ -87,9 +56,7 @@ label { font-size: 11px; font-weight: 700; color: #6B7280; margin-bottom: 4px; d
 
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
 .input-group { margin-bottom: 15px; }
-
 .btn-secondary { background: #f3f4f6; color: #374151; }
-.btn-secondary:hover { background: #e5e7eb; }
 
 /* Toggle */
 .switch { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }

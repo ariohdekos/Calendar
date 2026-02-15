@@ -1,4 +1,4 @@
-// 1. КОНФІГУРАЦІЯ FIREBASE
+// 1. КОНФІГУРАЦІЯ FIREBASE (ВАШІ РОБОЧІ КЛЮЧІ)
 const firebaseConfig = {
   apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
   authDomain: "liceum-eit-manager.firebaseapp.com",
@@ -10,11 +10,10 @@ const firebaseConfig = {
   measurementId: "G-NKS31DZ3MK"
 };
 
-// Ініціалізація
 try {
     firebase.initializeApp(firebaseConfig);
 } catch (e) {
-    console.error("Помилка Firebase:", e);
+    console.error("Firebase Error:", e);
 }
 const db = firebase.database();
 
@@ -26,7 +25,6 @@ let selectedSlot = null;
 let clickedEvent = null;
 let activeFilter = null;
 let reportChartInstance = null;
-let currentTeachersList = [];
 
 // ==========================================
 // 2. ВХІД / ВИХІД
@@ -39,7 +37,7 @@ window.tryLogin = () => {
         sessionStorage.setItem('st_token', pass);
         startApp();
     } else {
-        alert("Невірний код доступу!");
+        alert("Невірний код!");
     }
 };
 
@@ -54,9 +52,8 @@ function startApp() {
     document.getElementById('statusBar').style.display = 'flex';
     document.getElementById('mainApp').style.display = 'grid';
     
-    const badge = document.getElementById('roleBadge');
-    badge.textContent = currentUser.role;
-    badge.style.background = currentUser.color;
+    document.getElementById('roleBadge').textContent = currentUser.role;
+    document.getElementById('roleBadge').style.background = currentUser.color;
 
     const tgPanel = document.getElementById('tgPanel');
     if(tgPanel) tgPanel.style.display = (currentUser.level === 'tech') ? 'block' : 'none';
@@ -66,11 +63,8 @@ function startApp() {
         document.getElementById('tgChatId').value = localStorage.getItem('st_tg_chat') || '';
     }
 
-    // 1. Спочатку малюємо календар
     initCalendar();
-    
-    // 2. Тільки ТЕПЕР починаємо слухати події (уроки), коли календар вже існує
-    syncEventsAndTeachers();
+    syncEvents(); // Запускаємо синхронізацію подій після старту
 }
 
 // ==========================================
@@ -82,7 +76,7 @@ function initCalendar() {
         initialView: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek',
         locale: 'uk',
         slotMinTime: '08:00:00',
-        slotMaxTime: '20:00:00',
+        slotMaxTime: '21:00:00',
         selectable: true,
         allDaySlot: false,
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' },
@@ -95,6 +89,7 @@ function initCalendar() {
             document.getElementById('statusTeacherName').textContent = props.teacher || "—";
             document.getElementById('eventStatus').value = props.status || "";
             
+            // Логіка видалення (15 хв)
             const diff = (Date.now() - (props.createdAt || 0)) / 1000 / 60;
             const isCreator = props.creator === sessionStorage.getItem('st_token');
             const canDelete = currentUser.level === 'admin' || currentUser.level === 'tech' || (isCreator && diff <= 15);
@@ -120,61 +115,47 @@ function initCalendar() {
         }
     });
     calendar.render();
-    setTimeout(() => calendar.updateSize(), 200);
 }
 
 // ==========================================
-// 4. СИНХРОНІЗАЦІЯ ДАНИХ (РОЗДІЛЕНА)
+// 4. СИНХРОНІЗАЦІЯ
 // ==========================================
-
-// Ця частина запускається одразу (щоб перевірити пароль)
-function syncUsersOnly() {
+function syncUsers() {
     db.ref('users').on('value', (snap) => {
         USERS = snap.val() || {
             "777": { role: "Технік", level: "tech", color: "#6B7280" },
             "888": { role: "Адмін", level: "admin", color: "#4F46E5" },
             "999": { role: "Викладач", level: "teacher", color: "#10B981" }
         };
-        // Якщо ми вже залогінені, оновити current user (на випадок зміни прав на льоту)
-        if (sessionStorage.getItem('st_token') && USERS[sessionStorage.getItem('st_token')]) {
-            currentUser = USERS[sessionStorage.getItem('st_token')];
-        }
     });
 }
 
-// Ця частина запускається ТІЛЬКИ після startApp()
-function syncEventsAndTeachers() {
-    // Уроки
+function syncEvents() {
     db.ref('events').on('value', (snap) => {
         const events = [];
         const data = snap.val();
         if (data) {
             for(let id in data) events.push(data[id]);
         }
-        
-        // ТУТ БУЛА ПОМИЛКА: раніше calendar міг бути null
         if(calendar) {
             calendar.removeAllEvents();
             calendar.addEvents(events);
             filterEvents();
             updateStatusBar();
-        } else {
-            console.warn("Календар ще не створено, дані пропущено");
         }
     });
 
-    // Вчителі
     db.ref('teachers').on('value', (snap) => {
-        currentTeachersList = snap.val() || ["Шевченко", "Коваленко"];
-        renderTeachersUI(currentTeachersList);
+        const list = snap.val() || ["Шевченко", "Коваленко"];
+        renderTeachersUI(list);
     });
 }
 
 // ==========================================
-// 5. БРОНЮВАННЯ / ВИДАЛЕННЯ
+// 5. ОСНОВНІ ФУНКЦІЇ
 // ==========================================
 window.confirmBooking = () => {
-    if (!selectedSlot) return alert("Час не вибрано");
+    if (!selectedSlot) return;
 
     const isBlock = document.getElementById('isBlockTime').checked;
     const datePart = selectedSlot.startStr.split('T')[0];
@@ -189,14 +170,14 @@ window.confirmBooking = () => {
             backgroundColor: "#9CA3AF", borderColor: "#6B7280",
             extendedProps: { type: 'block' }
         };
-        sendTelegram(`⛔ <b>ТЕХНІЧНА ПЕРЕРВА</b>\n🕒 ${start.split('T')[1]} - ${end.split('T')[1]}`);
+        sendTelegram(`⛔ ТЕХНІЧНА ПЕРЕРВА: ${start.split('T')[1]} - ${end.split('T')[1]}`);
     } else {
         const title = document.getElementById('eventTitle').value;
         const teacher = document.getElementById('eventTeacher').value;
         const sClass = document.getElementById('eventClass').value;
         const color = document.getElementById('eventColor').value;
         
-        if(!title || !sClass) return alert("Заповніть назву та клас!");
+        if(!title || !sClass) return alert("Заповніть поля!");
 
         eventData = {
             id: eventId, title: `${title} | ${sClass} | ${teacher}`, start, end,
@@ -209,13 +190,10 @@ window.confirmBooking = () => {
                 baseTitle: title, baseColor: color
             }
         };
-        sendTelegram(`✅ <b>Новий запис:</b> ${title}\n🏫 Клас: ${sClass}\n👨‍🏫 ${teacher}\n🕒 ${start.split('T')[1]} - ${end.split('T')[1]}`);
+        sendTelegram(`✅ Новий: ${title} (${sClass})\n👨‍🏫 ${teacher}\n🕒 ${start.split('T')[1]} - ${end.split('T')[1]}`);
     }
     
-    // Зберігаємо в базу (повинно з'явитись миттєво)
-    db.ref('events/' + eventId).set(eventData)
-      .catch(err => alert("Помилка запису в базу: " + err.message));
-      
+    db.ref('events/' + eventId).set(eventData);
     closeModal();
 };
 
@@ -241,34 +219,30 @@ window.applyStatus = () => {
 };
 
 window.handleDelete = () => {
-    if (clickedEvent && confirm("Видалити урок?")) {
+    if (clickedEvent && confirm("Видалити?")) {
         db.ref('events/' + clickedEvent.id).remove();
-        sendTelegram(`🗑 <b>Видалено урок:</b> ${clickedEvent.extendedProps.baseTitle}`);
+        sendTelegram(`🗑 Видалено: ${clickedEvent.extendedProps.baseTitle}`);
         closeStatusModal();
     }
 };
 
-// ==========================================
-// 6. НАЛАШТУВАННЯ ТА ВЧИТЕЛІ
-// ==========================================
 window.updateAccessCode = (level, valFromHtml) => {
     const newVal = valFromHtml ? valFromHtml.trim() : "";
-    if (!newVal || newVal.length < 3) return alert("Код має бути мінімум 3 символи!");
+    if (newVal.length < 3) return alert("Мінімум 3 символи");
 
     db.ref('users').once('value').then(snap => {
         const currentUsers = snap.val() || {};
         const newUsers = { ...currentUsers };
         for (let code in newUsers) {
-            if (newUsers[code] && newUsers[code].level === level) delete newUsers[code];
+            if (newUsers[code].level === level) delete newUsers[code];
         }
         const roles = { tech: "Технік", admin: "Адмін", teacher: "Викладач" };
         const colors = { tech: "#6B7280", admin: "#4F46E5", teacher: "#10B981" };
         newUsers[newVal] = { role: roles[level], level: level, color: colors[level] };
         return db.ref('users').set(newUsers);
     }).then(() => {
-        alert(`✅ Код оновлено!`);
-        const el = document.getElementById('code' + level.charAt(0).toUpperCase() + level.slice(1));
-        if(el) el.value = '';
+        alert("Код оновлено!");
+        document.getElementById('code' + level.charAt(0).toUpperCase() + level.slice(1)).value = '';
     });
 };
 
@@ -284,7 +258,7 @@ window.addTeacher = () => {
 };
 
 window.deleteTeacher = (name) => {
-    if (!confirm(`Видалити викладача "${name}"?`)) return;
+    if (!confirm(`Видалити ${name}?`)) return;
     db.ref('teachers').once('value').then(snap => {
         const list = snap.val() || [];
         const newList = list.filter(t => t !== name);
@@ -301,9 +275,9 @@ function renderTeachersUI(list) {
 
     if (tList) {
         tList.innerHTML = list.map(t => `
-            <div class="teacher-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 8px; background: #f9fafb; border-radius: 8px;">
+            <div class="teacher-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px solid #eee;">
                 <span>👤 ${t}</span>
-                ${canDelete ? `<span onclick="deleteTeacher('${t}')" style="cursor:pointer; color:#EF4444; font-weight:bold; padding: 0 8px; font-size: 16px;">✕</span>` : ''}
+                ${canDelete ? `<span onclick="deleteTeacher('${t}')" style="cursor:pointer; color:red;">✕</span>` : ''}
             </div>
         `).join('');
     }
@@ -315,31 +289,17 @@ function renderTeachersUI(list) {
     }
 }
 
-// ==========================================
-// 7. ЗВІТ (З ГАРАНТОВАНОЮ ТАБЛИЦЕЮ)
-// ==========================================
+// Звітність (спрощена, як було)
 window.openReport = () => {
     const events = calendar.getEvents().filter(e => e.extendedProps && e.extendedProps.type === 'lesson');
     let totalLessons = 0;
     const stats = {};
     
-    const tableStyle = "width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px;";
-    const thStyle = "background: #f3f4f6; padding: 10px; border: 1px solid #e5e7eb; text-align: left; font-weight: 600;";
-    const tdStyle = "padding: 10px; border: 1px solid #e5e7eb; color: #374151;";
-    const btnStyle = "padding: 8px 16px; background: #10B981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;";
+    // Стилі для таблиці
+    const tableStyle = "width:100%; border-collapse: collapse; margin-top:10px; font-size:14px;";
+    const tdStyle = "padding:8px; border:1px solid #eee;";
 
-    let html = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin:0;">Статистика</h3>
-            <button onclick="downloadCSV()" style="${btnStyle}">📥 Скачати Excel</button>
-        </div>
-        <div style="max-height: 300px; overflow-y: auto;">
-            <table style="${tableStyle}">
-                <thead>
-                    <tr><th style="${thStyle}">Дата</th><th style="${thStyle}">Вчитель</th><th style="${thStyle}">Предмет</th><th style="${thStyle}">Уроків</th></tr>
-                </thead>
-                <tbody>
-    `;
+    let html = `<div style="max-height:300px; overflow-y:auto;"><table style="${tableStyle}"><thead><tr><th>Дата</th><th>Вчитель</th><th>Предмет</th></tr></thead><tbody>`;
     
     events.forEach(e => {
         const p = e.extendedProps;
@@ -347,10 +307,11 @@ window.openReport = () => {
         const count = parseInt(p.count) || 1;
         totalLessons += count;
         stats[p.teacher] = (stats[p.teacher] || 0) + count;
-        html += `<tr><td style="${tdStyle}">${e.start.toLocaleDateString()}</td><td style="${tdStyle}"><b>${p.teacher}</b></td><td style="${tdStyle}">${p.baseTitle} (${p.sClass})</td><td style="${tdStyle}">${count}</td></tr>`;
+        html += `<tr><td style="${tdStyle}">${e.start.toLocaleDateString()}</td><td style="${tdStyle}">${p.teacher}</td><td style="${tdStyle}">${p.baseTitle}</td></tr>`;
     });
     
-    html += `<tr style="background:#f9fafb; font-weight:bold;"><td colspan="3" style="${tdStyle}; text-align:right;">РАЗОМ:</td><td style="${tdStyle}">${totalLessons}</td></tr></tbody></table></div>`;
+    html += `</tbody></table></div>`;
+    html += `<p><b>РАЗОМ: ${totalLessons}</b></p>`;
     
     document.getElementById('reportResult').innerHTML = html;
     document.getElementById('reportOverlay').style.display = 'flex';
@@ -360,34 +321,13 @@ window.openReport = () => {
         if (reportChartInstance) reportChartInstance.destroy();
         reportChartInstance = new Chart(ctx, {
             type: 'bar',
-            data: { labels: Object.keys(stats), datasets: [{ label: 'Проведені уроки', data: Object.values(stats), backgroundColor: '#4F46E5', borderRadius: 5 }] },
+            data: { labels: Object.keys(stats), datasets: [{ label: 'Уроки', data: Object.values(stats), backgroundColor: '#4F46E5' }] },
             options: { responsive: true, maintainAspectRatio: false }
         });
     }, 100);
 };
 
-window.downloadCSV = () => {
-    const events = calendar.getEvents().filter(e => e.extendedProps && e.extendedProps.type === 'lesson');
-    let csvContent = "\uFEFFДата,Вчитель,Предмет,Клас,Кількість,Статус\n";
-    events.forEach(e => {
-        const p = e.extendedProps;
-        if (p.status === "❌ Скасовано") return; 
-        const date = e.start.toLocaleDateString();
-        const title = (p.baseTitle || "").replace(/,/g, " ");
-        csvContent += `${date},${p.teacher},${title},${p.sClass},${p.count || 1},${p.status || "Проведено"}\n`;
-    });
-    const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Звіт_Liceum_${new Date().toLocaleDateString()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
-
-// ==========================================
-// 8. ДОПОМІЖНЕ
-// ==========================================
+// Helpers
 window.closeReport = () => document.getElementById('reportOverlay').style.display = 'none';
 window.closeModal = () => { document.getElementById('modalOverlay').style.display = 'none'; if(calendar) calendar.unselect(); };
 window.closeStatusModal = () => { document.getElementById('statusModalOverlay').style.display = 'none'; clickedEvent = null; };
@@ -395,23 +335,15 @@ window.toggleBlockUI = (isChecked) => document.getElementById('bookingFields').s
 window.saveTgSettings = () => {
     localStorage.setItem('st_tg_token', document.getElementById('tgToken').value);
     localStorage.setItem('st_tg_chat', document.getElementById('tgChatId').value);
-    alert("Налаштування збережено!");
+    alert("Saved!");
 };
 async function sendTelegram(msg) {
     const t = localStorage.getItem('st_tg_token');
     const c = localStorage.getItem('st_tg_chat');
-    if(t && c) fetch(`https://api.telegram.org/bot${t}/sendMessage?chat_id=${c}&text=${encodeURIComponent(msg)}&parse_mode=HTML`);
+    if(t && c) fetch(`https://api.telegram.org/bot${t}/sendMessage?chat_id=${c}&text=${encodeURIComponent(msg)}`);
 }
-window.toggleFilter = (name) => {
-    activeFilter = (activeFilter === name) ? null : name;
-    filterEvents();
-    renderTeachersUI(currentTeachersList);
-};
-window.resetFilters = () => {
-    activeFilter = null;
-    filterEvents();
-    renderTeachersUI(currentTeachersList);
-};
+window.toggleFilter = (name) => { activeFilter = (activeFilter === name) ? null : name; filterEvents(); renderTeachersUI(currentTeachersList); };
+window.resetFilters = () => { activeFilter = null; filterEvents(); renderTeachersUI(currentTeachersList); };
 function filterEvents() {
     if(!calendar) return;
     calendar.getEvents().forEach(ev => {
@@ -422,11 +354,7 @@ function filterEvents() {
 }
 function updateStatusBar() {
     const now = new Date();
-    const current = calendar.getEvents().find(e => {
-        const isNow = now >= e.start && now < e.end;
-        const isNotCancelled = e.extendedProps.status !== "❌ Скасовано";
-        return isNow && isNotCancelled;
-    });
+    const current = calendar.getEvents().find(e => now >= e.start && now < e.end && e.extendedProps.status !== "❌ Скасовано");
     const bar = document.getElementById('statusBar');
     if (current) {
         bar.style.background = current.extendedProps.type === 'block' ? '#6B7280' : '#EF4444';
@@ -436,15 +364,11 @@ function updateStatusBar() {
     }
 }
 
-// 9. СТАРТ
-syncUsersOnly(); // 1. Вантажимо тільки юзерів для логіну
-
+// ЗАПУСК
+syncUsers();
 if (sessionStorage.getItem('st_token')) {
     setTimeout(() => {
         const token = sessionStorage.getItem('st_token');
-        if(USERS[token]) {
-            currentUser = USERS[token];
-            startApp(); // 2. Якщо вже є вхід -> малюємо календар і вантажимо уроки
-        }
+        if(USERS[token]) { currentUser = USERS[token]; startApp(); }
     }, 1000);
 }
