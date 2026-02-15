@@ -140,44 +140,63 @@ function syncAllData() {
 
     // Уроки
     // ОНОВЛЕНА ФУНКЦІЯ ЗАВАНТАЖЕННЯ ПОДІЙ
-db.ref('events').on('value', (snapshot) => {
-    const data = snapshot.val();
-    let calendarEvents = [];
-    
-    if (data) {
-        Object.keys(data).forEach(key => {
-            const event = data[key];
-            
-            // Базова конфігурація події
-            let newEvent = {
-                id: key,
-                start: event.start, // Формат має бути 'YYYY-MM-DDTHH:mm'
-                end: event.end,
-                title: event.title || event.teacher, // Заголовок
-                extendedProps: { ...event } // Зберігаємо всі інші дані
-            };
+function syncEvents() {
+    // Уроки
+    db.ref('events').on('value', (snap) => {
+        const events = [];
+        const data = snap.val();
+        
+        if (data) {
+            Object.keys(data).forEach(key => {
+                const ev = data[key];
+                
+                // ЯВНО формуємо структуру події для FullCalendar
+                // Це виправить проблему з відображенням і фільтрами
+                let newEvent = {
+                    id: key,
+                    title: ev.title || ev.extendedProps?.baseTitle || "Без назви",
+                    start: ev.start,
+                    end: ev.end,
+                    backgroundColor: ev.backgroundColor,
+                    borderColor: ev.borderColor,
+                    // Важливо: кладемо всі додаткові дані в extendedProps
+                    extendedProps: {
+                        teacher: ev.extendedProps?.teacher || ev.teacher,
+                        type: ev.extendedProps?.type || ev.type,
+                        sClass: ev.extendedProps?.sClass || ev.sClass,
+                        status: ev.extendedProps?.status || ev.status,
+                        count: ev.extendedProps?.count || ev.count,
+                        creator: ev.extendedProps?.creator || ev.creator,
+                        baseTitle: ev.extendedProps?.baseTitle || ev.title,
+                        createdAt: ev.extendedProps?.createdAt || ev.createdAt
+                    }
+                };
 
-            // СПЕЦІАЛЬНА ОБРОБКА ТЕХНІЧНОЇ ПЕРЕРВИ
-            if (event.type === 'tech' || event.role === 'Технік') {
-                newEvent.display = 'background'; // Робить подію фоновою
-                newEvent.backgroundColor = '#d1d5db'; // Сірий колір
-                newEvent.classNames = ['tech-event']; // Клас для CSS
-            } else {
-                // Звичайні уроки
-                newEvent.backgroundColor = event.color || '#3788d8';
-                newEvent.textColor = '#ffffff';
-            }
+                // Спеціальна обробка для Технічних перерв (щоб були сірими і фоновими)
+                if (newEvent.extendedProps.type === 'block') {
+                    newEvent.display = 'background';
+                    newEvent.backgroundColor = '#d1d5db'; // Сірий колір
+                    newEvent.classNames = ['tech-event']; // Додаємо клас для CSS
+                }
 
-            calendarEvents.push(newEvent);
-        });
-    }
+                events.push(newEvent);
+            });
+        }
 
-    // Оновлюємо календар
-    if (calendar) {
-        calendar.removeAllEvents();
-        calendar.addEventSource(calendarEvents);
-    }
-});
+        if(calendar) {
+            calendar.removeAllEvents();
+            calendar.addEvents(events);
+            filterEvents(); // Тепер фільтр спрацює коректно, бо дані структуровані
+            updateStatusBar();
+        }
+    });
+
+    // Вчителі
+    db.ref('teachers').on('value', (snap) => {
+        currentTeachersList = snap.val() || ["Шевченко", "Коваленко"];
+        renderTeachersUI(currentTeachersList);
+    });
+}
 
 // ==========================================
 // 5. ЛОГІКА БРОНЮВАННЯ ТА ВИДАЛЕННЯ

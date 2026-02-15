@@ -154,3 +154,14 @@ input:checked + .slider:before { transform: translateX(14px); }
     z-index: 5 !important;
     cursor: pointer;
 }
+/* Стиль для технічних перерв (сіра штриховка) */
+.tech-event {
+    background: repeating-linear-gradient(
+        45deg,
+        #e5e7eb,
+        #e5e7eb 10px,
+        #d1d5db 10px,
+        #d1d5db 20px
+    ) !important;
+    opacity: 0.8;
+}
