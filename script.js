@@ -335,20 +335,57 @@ window.toggleBlockUI = (isChecked) => {
 };
 
 // Рендер списку вчителів
+// 1. ОНОВЛЕНА ФУНКЦІЯ ВІДОБРАЖЕННЯ (Заміни стару renderTeachersUI на цю)
 function renderTeachersUI(list) {
-    const tList = document.getElementById('teacherList');
-    const tSelect = document.getElementById('eventTeacher');
-    const fList = document.getElementById('filterList');
+    const tList = document.getElementById('teacherList'); // Список у сайдбарі
+    const tSelect = document.getElementById('eventTeacher'); // Випадаючий список у модалці
+    const fList = document.getElementById('filterList'); // Кнопки фільтрів зверху
 
-    if(tList) tList.innerHTML = list.map(t => `<div class="teacher-item">👤 ${t}</div>`).join('');
-    if(tSelect) tSelect.innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
+    // Перевіряємо, чи має право користувач видаляти (Адмін або Технік)
+    const canDelete = currentUser && (currentUser.level === 'admin' || currentUser.level === 'tech');
+
+    // Рендер списку в налаштуваннях з кнопкою видалення
+    if (tList) {
+        tList.innerHTML = list.map(t => `
+            <div class="teacher-item" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>👤 ${t}</span>
+                ${canDelete ? `<span onclick="deleteTeacher('${t}')" style="cursor:pointer; color:#EF4444; font-weight:bold; padding: 0 5px;" title="Видалити">✕</span>` : ''}
+            </div>
+        `).join('');
+    }
+
+    // Рендер випадаючого списку (тут видаляти не можна, тільки вибирати)
+    if (tSelect) {
+        tSelect.innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
+    }
     
-    if(fList) {
+    // Рендер фільтрів (кнопки зверху)
+    if (fList) {
         fList.innerHTML = list.map(t => `
             <div class="filter-item ${activeFilter === t ? 'active' : ''}" onclick="toggleFilter('${t}')">${t}</div>
         `).join('');
     }
 }
+
+// 2. НОВА ФУНКЦІЯ ВИДАЛЕННЯ (Додай її в будь-яке місце в script.js, наприклад після addTeacher)
+window.deleteTeacher = (name) => {
+    if (!confirm(`Ви впевнені, що хочете видалити викладача "${name}" зі списку?`)) return;
+
+    db.ref('teachers').once('value').then(snap => {
+        const list = snap.val() || [];
+        // Фільтруємо список, залишаючи всіх, окрім видаленого
+        const newList = list.filter(t => t !== name);
+        
+        // Зберігаємо оновлений список у Firebase
+        db.ref('teachers').set(newList);
+        
+        // Якщо цей викладач був активним фільтром - скидаємо фільтр
+        if (activeFilter === name) {
+            activeFilter = null;
+            filterEvents();
+        }
+    });
+};
 
 window.addTeacher = () => {
     const name = document.getElementById('newTeacherName').value;
