@@ -1,12 +1,13 @@
 // 1. КОНФІГУРАЦІЯ FIREBASE
 const firebaseConfig = {
-  apiKey: "ВАШ_REAL_API_KEY", // Залиште тут свій реальний ключ
+  apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
   authDomain: "liceum-eit-manager.firebaseapp.com",
   databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "liceum-eit-manager",
   storageBucket: "liceum-eit-manager.firebasestorage.app",
   messagingSenderId: "854455059262",
-  appId: "1:854455059262:web:e6282bed63182559c5a26f"
+  appId: "1:854455059262:web:e6282bed63182559c5a26f",
+  measurementId: "G-NKS31DZ3MK"
 };
 
 // Ініціалізація
