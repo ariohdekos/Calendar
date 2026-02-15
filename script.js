@@ -1,13 +1,12 @@
 // 1. КОНФІГУРАЦІЯ FIREBASE (Вставте свої дані з Firebase Console)
 const firebaseConfig = {
- apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
-  authDomain: "liceum-eit-manager.firebaseapp.com",
-  databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "liceum-eit-manager",
-  storageBucket: "liceum-eit-manager.firebasestorage.app",
-  messagingSenderId: "854455059262",
-  appId: "1:854455059262:web:e6282bed63182559c5a26f",
-  measurementId: "G-NKS31DZ3MK"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "...",
+  appId: "..."
 };
 
 // Ініціалізація
@@ -162,61 +161,3 @@ if (sessionStorage.getItem('st_token')) {
         if(currentUser) startApp();
     }, 1000);
 }
-// 1. Перевірка вводу (вмикає кнопку)
-window.checkCodeInput = () => {
-    const val = document.getElementById('newCodeVal').value;
-    const btn = document.getElementById('btnUpdateCode');
-    
-    if (val.length >= 3) {
-        btn.disabled = false;
-        btn.style.opacity = "1";
-        btn.style.cursor = "pointer";
-        btn.classList.remove('btn-secondary');
-        btn.classList.add('btn-primary'); // Стає синьою
-    } else {
-        btn.disabled = true;
-        btn.style.opacity = "0.6";
-        btn.style.cursor = "not-allowed";
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-secondary'); // Стає сірою
-    }
-};
-
-// 2. Оновлена логіка збереження з індикацією
-window.updateAccessCodeCloud = () => {
-    const newCode = document.getElementById('newCodeVal').value;
-    const level = document.getElementById('codeLevel').value;
-    const btn = document.getElementById('btnUpdateCode');
-
-    // Блокуємо кнопку на час збереження
-    btn.textContent = "⏳ Збереження...";
-    btn.disabled = true;
-
-    // Оновлюємо об'єкт USERS
-    const newUsers = {...USERS};
-    
-    // Видаляємо старий код для вибраної ролі
-    for(let code in newUsers) {
-        if(newUsers[code].level === level) delete newUsers[code];
-    }
-    
-    // Додаємо новий
-    const roles = { tech: "Технік", admin: "Адмін", teacher: "Викладач" };
-    const colors = { tech: "#6B7280", admin: "#4F46E5", teacher: "#10B981" };
-    
-    newUsers[newCode] = { role: roles[level], level: level, color: colors[level] };
-
-    // Відправляємо в Firebase
-    db.ref('users').set(newUsers)
-        .then(() => {
-            alert(`✅ Успішно! Новий код для ${roles[level]}: ${newCode}`);
-            document.getElementById('newCodeVal').value = '';
-            checkCodeInput(); // Скидаємо стан кнопки
-            btn.textContent = "Оновити пароль";
-        })
-        .catch((error) => {
-            alert("❌ Помилка: " + error.message);
-            btn.textContent = "Спробувати ще раз";
-            btn.disabled = false;
-        });
-};

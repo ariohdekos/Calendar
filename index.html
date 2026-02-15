@@ -37,38 +37,27 @@
     <div id='calendar'></div>
     
     <div class="sidebar">
-  <details id="tgPanel" class="sidebar-panel" style="display:none; border-left: 4px solid #0088cc;">
-  <summary>⚙️ Керування системою</summary>
-  <div class="panel-content">
-    
-    <div class="input-group" style="margin-bottom: 15px;">
-      <label>TELEGRAM CONFIG</label>
-      <input type="password" id="tgToken" placeholder="Bot Token">
-      <input type="text" id="tgChatId" placeholder="Chat ID" style="margin-top:5px;">
-      <button class="btn btn-primary" onclick="saveTgSettings()" style="margin-top:5px;">Зберегти TG</button>
-    </div>
-
-    <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
-
-    <div class="input-group">
-      <label>ЗМІНА ДОСТУПУ</label>
-      <select id="codeLevel" style="margin-bottom: 5px;">
-          <option value="tech">Технік (777)</option>
-          <option value="admin">Адмін (888)</option>
-          <option value="teacher">Вчитель (999)</option>
-      </select>
-      
-      <div style="display: flex; gap: 5px;">
-        <input type="text" id="newCodeVal" placeholder="Новий код (мін. 3)" oninput="checkCodeInput()">
-      </div>
-      
-      <button id="btnUpdateCode" class="btn btn-secondary" onclick="updateAccessCodeCloud()" disabled style="margin-top:5px; opacity: 0.6; cursor: not-allowed;">
-        Оновити пароль
-      </button>
-    </div>
-
-  </div>
-</details>
+      <details id="tgPanel" class="sidebar-panel" style="display:none; border-left: 4px solid #0088cc;">
+        <summary>⚙️ Керування системою</summary>
+        <div class="panel-content">
+          <label>BOT TOKEN</label>
+          <input type="password" id="tgToken">
+          <label>CHAT ID</label>
+          <input type="text" id="tgChatId">
+          <button class="btn btn-primary" onclick="saveTgSettings()">Зберегти Cloud TG</button>
+          <hr>
+          <label>Зміна кодів доступу</label>
+          <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+            <input type="text" id="newCodeVal" placeholder="Новий код">
+            <select id="codeLevel">
+                <option value="tech">Технік</option>
+                <option value="admin">Адмін</option>
+                <option value="teacher">Вчитель</option>
+            </select>
+          </div>
+          <button class="btn btn-light" onclick="updateAccessCodeCloud()">Оновити пароль</button>
+        </div>
+      </details>
 
       <details class="sidebar-panel" open>
         <summary>🔍 Фільтр викладачів</summary>
