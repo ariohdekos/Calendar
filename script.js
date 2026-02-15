@@ -1,4 +1,4 @@
-// 1. КОНФІГУРАЦІЯ FIREBASE (ВАШІ РОБОЧІ КЛЮЧІ)
+// 1. КОНФІГУРАЦІЯ FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
   authDomain: "liceum-eit-manager.firebaseapp.com",
@@ -25,6 +25,7 @@ let selectedSlot = null;
 let clickedEvent = null;
 let activeFilter = null;
 let reportChartInstance = null;
+let isMobileMenuOpen = false;
 
 // ==========================================
 // 2. ВХІД / ВИХІД
@@ -64,22 +65,41 @@ function startApp() {
     }
 
     initCalendar();
-    syncEvents(); // Запускаємо синхронізацію подій після старту
+    syncEvents();
 }
 
 // ==========================================
-// 3. КАЛЕНДАР
+// 3. КАЛЕНДАР (ВИПРАВЛЕНО ДЛЯ МОБІЛЬНИХ)
 // ==========================================
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
+    
+    // Визначаємо, чи це мобільний пристрій
+    const isMobile = window.innerWidth < 768;
+
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek',
+        // На мобільному показуємо 1 день, на ПК - тиждень
+        initialView: isMobile ? 'timeGridDay' : 'timeGridWeek',
         locale: 'uk',
         slotMinTime: '08:00:00',
         slotMaxTime: '21:00:00',
         selectable: true,
         allDaySlot: false,
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' },
+        
+        // ВАЖЛИВО ДЛЯ МОБІЛЬНИХ: 0 затримка при натисканні
+        selectLongPressDelay: 0, 
+        eventLongPressDelay: 0,
+        longPressDelay: 0,
+        
+        // Висота слотів (щоб легше було потрапити пальцем)
+        slotDuration: '00:30:00',
+        slotLabelInterval: '01:00',
+        
+        headerToolbar: { 
+            left: 'prev,next today', 
+            center: 'title', 
+            right: isMobile ? '' : 'timeGridWeek,timeGridDay' // Ховаємо кнопки перемикання на мобільному
+        },
         
         eventClick: (info) => {
             clickedEvent = info.event;
@@ -89,7 +109,6 @@ function initCalendar() {
             document.getElementById('statusTeacherName').textContent = props.teacher || "—";
             document.getElementById('eventStatus').value = props.status || "";
             
-            // Логіка видалення (15 хв)
             const diff = (Date.now() - (props.createdAt || 0)) / 1000 / 60;
             const isCreator = props.creator === sessionStorage.getItem('st_token');
             const canDelete = currentUser.level === 'admin' || currentUser.level === 'tech' || (isCreator && diff <= 15);
@@ -154,6 +173,20 @@ function syncEvents() {
 // ==========================================
 // 5. ОСНОВНІ ФУНКЦІЇ
 // ==========================================
+
+// Відкриття/Закриття меню на мобільному
+window.toggleSidebar = () => {
+    const sb = document.getElementById('sidebar');
+    if (!sb) return;
+    
+    isMobileMenuOpen = !isMobileMenuOpen;
+    if (isMobileMenuOpen) {
+        sb.classList.add('show-mobile');
+    } else {
+        sb.classList.remove('show-mobile');
+    }
+};
+
 window.confirmBooking = () => {
     if (!selectedSlot) return;
 
@@ -289,7 +322,7 @@ function renderTeachersUI(list) {
     }
 }
 
-// Звітність (спрощена, як було)
+// Звітність
 window.openReport = () => {
     const events = calendar.getEvents().filter(e => e.extendedProps && e.extendedProps.type === 'lesson');
     let totalLessons = 0;

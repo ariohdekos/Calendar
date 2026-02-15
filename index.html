@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Studio Manager v7.7 | Fixed Analytics</title>
+  <title>Studio Manager v7.7 | Mobile Fix</title>
   <link rel="stylesheet" href="style.css">
   
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
@@ -25,6 +25,7 @@
   </div>
 
   <div id="topBar" style="display: none;">
+    <button id="mobileMenuBtn" onclick="toggleSidebar()">☰ Меню</button>
     <div class="brand">STUDIO MANAGER</div>
     <div class="user-controls">
       <span id="roleBadge" class="badge"></span> 
@@ -38,7 +39,12 @@
     
     <div id="calendar"></div>
 
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header-mobile">
+          <h3>Меню</h3>
+          <button onclick="toggleSidebar()">✕</button>
+      </div>
+
       <div class="sidebar-panel">
         <details open>
           <summary>🔍 Фільтр по вчителю</summary>
