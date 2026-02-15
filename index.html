@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Liceum Manager v7.8</title>
+  <title>Liceum Manager v7.9</title>
   <link rel="stylesheet" href="style.css">
   
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
@@ -71,34 +71,36 @@
 
             <hr>
             
-            <h4>Зміна паролів</h4>
-            <div class="input-group">
-              <label>Технік</label>
-              <div style="display:flex; gap:5px;">
-                <input type="text" id="codeTech" placeholder="Новий код">
-                <button class="btn btn-secondary" onclick="updateAccessCode('tech', document.getElementById('codeTech').value)">OK</button>
-              </div>
-            </div>
-            <div class="input-group">
-                <label>Адмін</label>
-                <div style="display:flex; gap:5px;">
-                  <input type="text" id="codeAdmin" placeholder="Новий код">
-                  <button class="btn btn-secondary" onclick="updateAccessCode('admin', document.getElementById('codeAdmin').value)">OK</button>
+            <div id="passwordSettings" style="display: none;">
+                <h4>Зміна паролів (Технік)</h4>
+                <div class="input-group">
+                  <label>Технік</label>
+                  <div style="display:flex; gap:5px;">
+                    <input type="text" id="codeTech" placeholder="Новий код">
+                    <button class="btn btn-secondary" onclick="updateAccessCode('tech', document.getElementById('codeTech').value)">OK</button>
+                  </div>
                 </div>
-            </div>
-             <div class="input-group">
-                <label>Викладач</label>
-                <div style="display:flex; gap:5px;">
-                  <input type="text" id="codeTeacher" placeholder="Новий код">
-                  <button class="btn btn-secondary" onclick="updateAccessCode('teacher', document.getElementById('codeTeacher').value)">OK</button>
+                <div class="input-group">
+                    <label>Адмін</label>
+                    <div style="display:flex; gap:5px;">
+                      <input type="text" id="codeAdmin" placeholder="Новий код">
+                      <button class="btn btn-secondary" onclick="updateAccessCode('admin', document.getElementById('codeAdmin').value)">OK</button>
+                    </div>
                 </div>
-            </div>
-
-            <div id="tgPanel" style="display:none; margin-top:15px;">
-                <h4>Telegram Bot</h4>
-                <input type="text" id="tgToken" placeholder="Bot Token">
-                <input type="text" id="tgChatId" placeholder="Chat ID">
-                <button class="btn btn-primary" onclick="saveTgSettings()">Зберегти</button>
+                 <div class="input-group">
+                    <label>Викладач</label>
+                    <div style="display:flex; gap:5px;">
+                      <input type="text" id="codeTeacher" placeholder="Новий код">
+                      <button class="btn btn-secondary" onclick="updateAccessCode('teacher', document.getElementById('codeTeacher').value)">OK</button>
+                    </div>
+                </div>
+                
+                <div id="tgPanel" style="display:none; margin-top:15px;">
+                    <h4>Telegram Bot</h4>
+                    <input type="text" id="tgToken" placeholder="Bot Token">
+                    <input type="text" id="tgChatId" placeholder="Chat ID">
+                    <button class="btn btn-primary" onclick="saveTgSettings()">Зберегти</button>
+                </div>
             </div>
 
           </div>
@@ -229,11 +231,37 @@
   </div>
   
   <div id="instructionModalOverlay" class="overlay">
-    <div class="modal-content">
-        <h3>Довідка</h3>
-        <p>1. Клікніть на календар для створення.</p>
-        <p>2. Клікніть на урок для зміни статусу.</p>
-        <button class="btn btn-primary" onclick="document.getElementById('instructionModalOverlay').style.display='none'">OK</button>
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>Довідка</h3>
+            <button onclick="document.getElementById('instructionModalOverlay').style.display='none'" style="border:none; background:none; font-size:20px; cursor:pointer;">✕</button>
+        </div>
+        <div class="modal-body">
+            
+            <p style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 10px; font-size: 14px;">
+              <b>1. Створення уроку:</b><br>
+              Оберіть потрібний діапазон у календарі (на телефоні просто натисніть). У вікні вкажіть предмет, клас та оберіть своє ім'я.
+            </p>
+            
+            <p style="background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 10px; font-size: 14px;">
+              <b>2. Форс-мажор:</b><br>
+              Натисніть на свій вже створений урок. У вікні "Змінити статус" оберіть потрібний варіант (наприклад, "Запізнююсь").
+            </p>
+    
+            <p style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 10px; font-size: 14px;">
+              <b>3. Видалення:</b><br>
+              Ви можете видалити урок <b>лише протягом 15 хвилин</b> після створення. Якщо час вийшов — ставте статус "Скасовано".
+            </p>
+    
+            <p style="background: #f3f4f6; padding: 12px; border-radius: 8px; border-left: 4px solid #6b7280; margin-bottom: 0; font-size: 14px;">
+              <b>4. Технічна пауза:</b><br>
+              Це сірі блоки. Вони означають, що студія заблокована адміністратором.
+            </p>
+
+        </div>
+        <div class="modal-footer">
+             <button class="btn btn-primary" onclick="document.getElementById('instructionModalOverlay').style.display='none'" style="width:100%">Зрозуміло</button>
+        </div>
     </div>
   </div>
 

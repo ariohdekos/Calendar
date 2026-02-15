@@ -25,6 +25,12 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-color);
 
 #calendar { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 
+/* --- ПІДСВІТКА ВИДІЛЕННЯ (ВАЖЛИВО) --- */
+.fc-highlight {
+    background: rgba(79, 70, 229, 0.3) !important;
+}
+/* ------------------------------------- */
+
 /* Сайдбар */
 .sidebar-panel { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; overflow: hidden; border: 1px solid #eee; }
 details summary { padding: 15px 20px; font-weight: 700; cursor: pointer; border-bottom: 1px solid #f3f4f6; list-style: none; outline: none; }

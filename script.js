@@ -56,29 +56,37 @@ function startApp() {
     document.getElementById('roleBadge').textContent = currentUser.role;
     document.getElementById('roleBadge').style.background = currentUser.color;
 
+    // --- ЛОГІКА ВИДИМОСТІ ЕЛЕМЕНТІВ ---
+    
+    // 1. Telegram + ПАРОЛІ (Тільки для техніка 777)
+    const passPanel = document.getElementById('passwordSettings');
     const tgPanel = document.getElementById('tgPanel');
-    if(tgPanel) tgPanel.style.display = (currentUser.level === 'tech') ? 'block' : 'none';
-
-    if(currentUser.level === 'tech') {
+    
+    if (currentUser.level === 'tech') {
+        passPanel.style.display = 'block';
+        tgPanel.style.display = 'block';
+        // Завантаження токенів
         document.getElementById('tgToken').value = localStorage.getItem('st_tg_token') || '';
         document.getElementById('tgChatId').value = localStorage.getItem('st_tg_chat') || '';
+    } else {
+        passPanel.style.display = 'none'; // Адмін і Вчитель не бачать паролі
+        tgPanel.style.display = 'none';
     }
 
-    // --- ВАЖЛИВО: Ховаємо кнопку звіту для Вчителя ---
+    // 2. Звітність (Не для вчителя)
     const reportPanel = document.getElementById('reportPanel');
     if (currentUser.level === 'teacher') {
         if(reportPanel) reportPanel.style.display = 'none';
     } else {
         if(reportPanel) reportPanel.style.display = 'block';
     }
-    // -----------------------------------------------
 
     initCalendar();
     syncEvents(); 
 }
 
 // ==========================================
-// 3. КАЛЕНДАР (ВИПРАВЛЕНО ДЛЯ МОБІЛЬНИХ)
+// 3. КАЛЕНДАР (FIX: SELECT MIRROR)
 // ==========================================
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
@@ -90,11 +98,11 @@ function initCalendar() {
         selectable: true,
         allDaySlot: false,
         
-        // --- ВАЖЛИВО: Щоб на телефоні працювало відразу, а не через довгий тап ---
-        selectLongPressDelay: 0, 
+        // --- ВІЗУАЛІЗАЦІЯ ВИБОРУ ---
+        selectMirror: true, // Вмикає відображення "фантомної" події при виділенні
+        selectLongPressDelay: 0, // Миттєва реакція на тап (для мобільних)
         eventLongPressDelay: 0,
-        longPressDelay: 0,
-        // ----------------------------------------------------------------------
+        // ---------------------------
 
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' },
         
@@ -305,7 +313,7 @@ function renderTeachersUI(list) {
     }
 }
 
-// Звітність (З ГАРАНТОВАНОЮ ТАБЛИЦЕЮ + Експорт)
+// Звітність
 window.openReport = () => {
     const events = calendar.getEvents().filter(e => e.extendedProps && e.extendedProps.type === 'lesson');
     let totalLessons = 0;
