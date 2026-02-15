@@ -1,7 +1,7 @@
 const USERS = {
-    "777": { role: "Технік", level: "tech", color: "#6B7280" },
-    "888": { role: "Адмін", level: "admin", color: "#4F46E5" },
-    "999": { role: "Викладач", level: "teacher", color: "#10B981" }
+    "Paranoya01": { role: "Технік", level: "tech", color: "#6B7280" },
+    "admin": { role: "Адмін", level: "admin", color: "#4F46E5" },
+    "2026": { role: "Викладач", level: "teacher", color: "#10B981" }
 };
 
 let currentUser = null;
