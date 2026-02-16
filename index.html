@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Liceum Manager v8.0 (Updated)</title>
+  <title>Liceum Manager v8.0</title>
   <link rel="stylesheet" href="style.css">
   
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -23,7 +25,7 @@
   </div>
 
   <div id="topBar" style="display: none;">
-    <div class="brand">LICEUM STUDIO MANAGER</div>
+    <div class="brand">LICEUM MANAGER</div>
     <div class="user-controls">
       <span id="roleBadge" class="badge"></span> 
       <button onclick="logout()" class="btn-logout">Вихід</button>
@@ -33,107 +35,70 @@
   <div id="statusBar" style="display: none;"></div>
 
   <div class="container" id="mainApp" style="display: none;">
-    <div id="calendar"></div>
-
     <div class="sidebar">
-      <div class="sidebar-panel">
-        <details open>
-          <summary>🔍 Фільтр по вчителю</summary>
-          <div class="panel-content">
-             <div class="filter-container" id="filterList"></div>
-             <button class="btn btn-light" onclick="resetFilters()">Показати всіх</button>
-          </div>
-        </details>
-      </div>
+      
+      <button class="btn btn-success" style="margin-bottom: 15px; display: flex; justify-content: center; gap: 8px; font-size: 14px;" onclick="document.getElementById('instructionModalOverlay').style.display='flex'">
+        📖 Інструкція
+      </button>
 
-      <div class="sidebar-panel" id="reportPanel">
+      <button class="btn btn-primary" style="margin-bottom: 20px;" onclick="openReport()">📊 Аналітика</button>
+
+      <h3>Фільтр викладачів</h3>
+      <div id="filterList" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:15px;"></div>
+      <button class="btn btn-secondary" onclick="resetFilters()">Скинути фільтр</button>
+      
+      <details id="adminPanel" class="sidebar-panel" style="display:none; margin-top:20px;">
+        <summary>⚙️ Налаштування</summary>
         <div class="panel-content">
-            <button class="btn btn-primary" onclick="openReport()">📊 Звітність</button>
+          <label>Додати викладача</label>
+          <input type="text" id="newTeacherName" placeholder="Прізвище">
+          <button class="btn btn-light" onclick="addTeacher()">Додати</button>
         </div>
-      </div>
-
-      <div class="sidebar-panel">
-        <details>
-          <summary>⚙️ Налаштування</summary>
-          <div class="panel-content">
-            <h4>Вчителі</h4>
-            <div id="teacherList" style="margin-bottom: 10px;"></div>
-            <div class="input-group">
-                <input type="text" id="newTeacherName" placeholder="Ім'я">
-                <button class="btn btn-success" onclick="addTeacher()">+ Додати</button>
-            </div>
-            <hr>
-            <div id="passwordSettings" style="display: none;">
-                <h4>Керування кодами (Технік)</h4>
-                <div class="input-group"><label>Технік</label><input type="text" id="codeTech" placeholder="Новий код"></div>
-                <div class="input-group"><label>Адмін</label><input type="text" id="codeAdmin" placeholder="Новий код"></div>
-                <div class="input-group"><label>Викладач</label><input type="text" id="codeTeacher" placeholder="Новий код"></div>
-                <button class="btn btn-secondary" onclick="updateAllCodes()">Оновити всі коди</button>
-            </div>
-          </div>
-        </details>
-      </div>
+      </details>
+    </div>
+    
+    <div class="calendar-container">
+      <div id="calendar"></div>
     </div>
   </div>
 
   <div id="modalOverlay" class="overlay">
     <div class="modal-content modern-modal">
-      <div class="modal-header">
-        <h3>Новий запис</h3>
-        <button onclick="closeModal()" style="border:none; background:none; font-size:20px; cursor:pointer;">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="input-grid">
-            <div class="input-group"><label>Початок</label><input type="time" id="startTimeInput"></div>
-            <div class="input-group"><label>Кінець</label><input type="time" id="endTimeInput"></div>
-        </div>
-
-        <div id="adminBlockOptions" style="margin-bottom: 15px; padding: 10px; background: #fee2e2; border-radius: 8px; display: none;">
-            <label class="switch">
-                <input type="checkbox" id="isBlockTime" onchange="toggleBlockUI(this.checked)">
-                <span class="slider"></span>
-                <span class="switch-label">⛔ Технічна перерва</span>
-            </label>
-        </div>
+      <div class="modal-header"><h3>Новий запис</h3></div>
+      <div class="modal-body" id="bookingFields">
         
-        <div id="bookingFields">
-            <div class="input-group">
-                <label>Предмет</label>
-                <input type="text" id="eventSubject" list="subjectsList" placeholder="Оберіть або введіть назву...">
-                <datalist id="subjectsList">
-                    <option value="Математика">
-                    <option value="Українська мова">
-                    <option value="Англійська мова">
-                    <option value="Історія України">
-                    <option value="Фізика">
-                    <option value="Хімія">
-                    <option value="Біологія">
-                    <option value="Географія">
-                </datalist>
-            </div>
+        <div class="input-grid" style="margin-bottom: 15px;">
+          <div class="input-group" style="margin-bottom: 0;">
+            <label>Предмет</label>
+            <input type="text" id="eventSubject" list="subjectsList" placeholder="Оберіть...">
+            <datalist id="subjectsList">
+              <option value="Математика"></option>
+              <option value="Укр. мова"></option>
+              <option value="Англ. мова"></option>
+              <option value="Історія"></option>
+            </datalist>
+          </div>
+          <div class="input-group" style="margin-bottom: 0;">
+            <label>Клас / Група</label>
+            <input type="text" id="eventName" placeholder="Напр. 11-А">
+          </div>
+        </div>
 
-            <div class="input-grid">
-                <div class="input-group">
-                    <label>Клас / Група</label>
-                    <input type="text" id="eventClass" placeholder="Напр. 11-А">
-                </div>
-                <div class="input-group">
-                    <label>Вчитель</label>
-                    <select id="eventTeacher"></select>
-                </div>
-            </div>
+        <div class="input-group">
+          <label>Колір в календарі</label>
+          <div style="display: flex; gap: 10px;">
+            <div class="color-picker compact-color" style="background:#3b82f6; border: 2px solid #1F2937;" onclick="selectColor(this, '#3b82f6')"></div>
+            <div class="color-picker compact-color" style="background:#10b981" onclick="selectColor(this, '#10b981')"></div>
+            <div class="color-picker compact-color" style="background:#f59e0b" onclick="selectColor(this, '#f59e0b')"></div>
+            <div class="color-picker compact-color" style="background:#8b5cf6" onclick="selectColor(this, '#8b5cf6')"></div>
+            <div class="color-picker compact-color" style="background:#ec4899" onclick="selectColor(this, '#ec4899')"></div>
+          </div>
+          <input type="hidden" id="eventColor" value="#3b82f6">
+        </div>
 
-            <div class="input-grid">
-                <div class="input-group"><label>К-сть уроків</label><input type="number" id="eventCount" value="1"></div>
-                <div class="input-group">
-                    <label>Колір</label>
-                    <select id="eventColor">
-                        <option value="#4F46E5">🔵 Стандарт</option>
-                        <option value="#F59E0B">🟠 Важливо</option>
-                        <option value="#EC4899">🌸 Додатковий</option>
-                    </select>
-                </div>
-            </div>
+        <div class="input-group">
+          <label>Викладач</label>
+          <select id="eventTeacher"></select>
         </div>
       </div>
       <div class="modal-footer">
@@ -148,9 +113,10 @@
         <div class="modal-header"><h3>Керування</h3></div>
         <div class="modal-body">
             <h4 id="statusEventTitle">Назва уроку</h4>
-            <select id="eventStatus">
+            <select id="eventStatus" style="width: 100%; padding: 10px; border-radius: 8px;">
                 <option value="">🟢 Все за планом</option>
                 <option value="✅ Проведено">✅ Проведено</option>
+                <option value="🏃 Запізнююсь">🏃 Запізнююсь</option>
                 <option value="❌ Скасовано">❌ Скасовано</option>
             </select>
         </div>
@@ -163,12 +129,35 @@
   </div>
 
   <div id="reportOverlay" class="overlay">
-    <div class="modal-content" style="max-width: 800px;">
-        <div class="modal-header"><h3>Аналітика</h3><button onclick="closeReport()">✕</button></div>
-        <div class="modal-body">
-            <div id="reportResult"></div>
-            <canvas id="reportChart" style="height:300px;"></canvas>
+    <div class="modal-content" style="max-width: 800px; padding: 20px;">
+        <div class="modal-header" style="border-bottom:none; padding:0 0 15px 0;">
+            <h3>Аналітика викладачів</h3>
+            <button class="btn btn-secondary" onclick="closeReport()">✕</button>
         </div>
+        <div class="modal-body" style="padding:0;">
+            <canvas id="reportChart"></canvas>
+        </div>
+    </div>
+  </div>
+
+  <div id="instructionModalOverlay" class="overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 500px; padding: 25px;">
+      <h3 style="margin-top: 0; color: #1F2937;">📖 Коротка інструкція</h3>
+      <div style="font-size: 14px; color: #4b5563; line-height: 1.6;">
+        <p style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+          <b>1. Створення уроку:</b><br>
+          Оберіть діапазон у календарі. Вкажіть предмет, клас та ім'я.
+        </p>
+        <p style="background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+          <b>2. Форс-мажор:</b><br>
+          Натисніть на свій урок -> змініть статус на "Запізнююсь" або "Скасовано".
+        </p>
+        <p style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444;">
+          <b>3. Видалення:</b><br>
+          Безпечне видалення (кнопка "Видалити") доступне <b>15 хвилин</b> після створення.
+        </p>
+      </div>
+      <button class="btn btn-primary" style="width: 100%; margin-top: 15px;" onclick="document.getElementById('instructionModalOverlay').style.display='none'">Зрозуміло</button>
     </div>
   </div>
 
