@@ -58,8 +58,6 @@ function startApp() {
     document.getElementById('roleBadge').style.background = currentUser.color;
 
     // --- НАЛАШТУВАННЯ ДОСТУПУ ---
-    
-    // 1. Паролі та Telegram (Тільки для 777)
     const passPanel = document.getElementById('passwordSettings');
     const tgPanel = document.getElementById('tgPanel');
     
@@ -73,7 +71,6 @@ function startApp() {
         tgPanel.style.display = 'none';
     }
 
-    // 2. Звітність (Не для вчителя)
     const reportPanel = document.getElementById('reportPanel');
     if (currentUser.level === 'teacher') {
         if(reportPanel) reportPanel.style.display = 'none';
@@ -86,7 +83,7 @@ function startApp() {
 }
 
 // ==========================================
-// 3. КАЛЕНДАР (ВИПРАВЛЕНО: SelectMirror + Touch)
+// 3. КАЛЕНДАР
 // ==========================================
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
@@ -97,8 +94,6 @@ function initCalendar() {
         slotMaxTime: '21:00:00',
         selectable: true,
         allDaySlot: false,
-        
-        // ВІЗУАЛІЗАЦІЯ ВИБОРУ
         selectMirror: true, 
         selectLongPressDelay: 0, 
         eventLongPressDelay: 0,
@@ -131,6 +126,11 @@ function initCalendar() {
             document.getElementById('startTimeInput').value = startStr;
             document.getElementById('endTimeInput').value = endStr;
             
+            // ОЧИЩЕННЯ ПОЛІВ (ОНОВЛЕНО)
+            document.getElementById('eventSubject').value = ''; 
+            document.getElementById('eventClass').value = '';
+            document.getElementById('eventCount').value = '1';
+            
             const adminOpts = document.getElementById('adminBlockOptions');
             if(adminOpts) adminOpts.style.display = (currentUser.level !== 'teacher') ? 'block' : 'none';
             
@@ -141,7 +141,7 @@ function initCalendar() {
 }
 
 // ==========================================
-// 4. СИНХРОНІЗАЦІЯ (ВИПРАВЛЕНО: Structure + Filter)
+// 4. СИНХРОНІЗАЦІЯ
 // ==========================================
 function syncUsers() {
     db.ref('users').on('value', (snap) => {
@@ -157,8 +157,6 @@ function syncEvents() {
     db.ref('events').on('value', (snap) => {
         const events = [];
         const data = snap.val();
-        
-        // Збираємо список вчителів з подій (унікальні)
         const teachersSet = new Set();
 
         if (data) {
@@ -172,10 +170,9 @@ function syncEvents() {
                     end: ev.end,
                     backgroundColor: ev.backgroundColor,
                     borderColor: ev.borderColor,
-                    extendedProps: { ...ev.extendedProps } // Копіюємо все
+                    extendedProps: { ...ev.extendedProps }
                 };
                 
-                // Якщо раптом extendedProps немає (старі дані), пробуємо відновити
                 if (!newEvent.extendedProps) {
                     newEvent.extendedProps = {
                          teacher: ev.teacher,
@@ -189,18 +186,15 @@ function syncEvents() {
                     };
                 }
 
-                // ОБРОБКА ТЕХНІЧНОЇ ПЕРЕРВИ
                 if (newEvent.extendedProps.type === 'block') {
                     newEvent.display = 'background';
                     newEvent.backgroundColor = '#d1d5db'; 
                     newEvent.classNames = ['tech-event']; 
                 } else {
-                    // Якщо це звичайний урок - додаємо вчителя в список (для фільтру)
                     if (newEvent.extendedProps.teacher && newEvent.extendedProps.teacher !== "Технічна пауза") {
                         teachersSet.add(newEvent.extendedProps.teacher);
                     }
                 }
-
                 events.push(newEvent);
             });
         }
@@ -213,7 +207,6 @@ function syncEvents() {
         }
     });
 
-    // Окремо слухаємо список вчителів (ручний)
     db.ref('teachers').on('value', (snap) => {
         currentTeachersList = snap.val() || ["Шевченко", "Коваленко"];
         renderTeachersUI(currentTeachersList);
@@ -221,7 +214,7 @@ function syncEvents() {
 }
 
 // ==========================================
-// 5. ОСНОВНІ ФУНКЦІЇ
+// 5. ОСНОВНІ ФУНКЦІЇ (ОНОВЛЕНО)
 // ==========================================
 window.confirmBooking = () => {
     if (!selectedSlot) return;
@@ -241,25 +234,38 @@ window.confirmBooking = () => {
         };
         sendTelegram(`⛔ ТЕХНІЧНА ПЕРЕРВА: ${start.split('T')[1]} - ${end.split('T')[1]}`);
     } else {
-        const title = document.getElementById('eventTitle').value;
+        // ЗБИРАЄМО ДАНІ З НОВИХ ПОЛІВ
+        const subject = document.getElementById('eventSubject').value.trim();
+        const sClass = document.getElementById('eventClass').value.trim();
         const teacher = document.getElementById('eventTeacher').value;
-        const sClass = document.getElementById('eventClass').value;
         const color = document.getElementById('eventColor').value;
         
-        if(!title || !sClass) return alert("Заповніть поля!");
+        if(!subject || !sClass) return alert("Будь ласка, вкажіть предмет та клас!");
+
+        // Формуємо гарний заголовок: Предмет (Клас)
+        const fullTitle = `${subject} (${sClass})`;
+        // Заголовок для календаря: Предмет (Клас) | Вчитель (або просто Предмет (Клас))
+        const calendarTitle = fullTitle; 
 
         eventData = {
-            id: eventId, title: `${title} | ${sClass} | ${teacher}`, start, end,
+            id: eventId, 
+            title: calendarTitle, 
+            start, end,
             backgroundColor: color, borderColor: color,
             extendedProps: { 
-                teacher, type: 'lesson', sClass, 
+                teacher, 
+                type: 'lesson', 
+                sClass, // Для сумісності залишаємо
+                subject: subject, // Нове поле
+                className: sClass, // Нове поле
                 count: document.getElementById('eventCount').value || 1,
                 createdAt: Date.now(), 
                 creator: sessionStorage.getItem('st_token'),
-                baseTitle: title, baseColor: color
+                baseTitle: fullTitle, 
+                baseColor: color
             }
         };
-        sendTelegram(`✅ Новий: ${title} (${sClass})\n👨‍🏫 ${teacher}\n🕒 ${start.split('T')[1]} - ${end.split('T')[1]}`);
+        sendTelegram(`✅ Новий: ${fullTitle}\n👨‍🏫 ${teacher}\n🕒 ${start.split('T')[1]} - ${end.split('T')[1]}`);
     }
     
     db.ref('events/' + eventId).set(eventData);
@@ -279,7 +285,7 @@ window.applyStatus = () => {
     else if (newStatus.includes("Запізнююсь")) { finalTitle = "⏳ " + finalTitle; finalColor = "#F59E0B"; }
 
     db.ref('events/' + clickedEvent.id).update({
-        title: `${finalTitle} | ${props.sClass} | ${props.teacher}`,
+        title: finalTitle,
         backgroundColor: finalColor,
         borderColor: finalColor,
         "extendedProps/status": newStatus
@@ -352,7 +358,6 @@ function renderTeachersUI(list) {
     }
     if (tSelect) tSelect.innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
     if (fList) {
-        // Фільтруємо "Технічну паузу" зі списку кнопок фільтрів
         const cleanList = list.filter(t => t !== "Технічна пауза");
         fList.innerHTML = cleanList.map(t => `
             <div class="filter-item ${activeFilter === t ? 'active' : ''}" onclick="toggleFilter('${t}')">${t}</div>
@@ -390,7 +395,7 @@ window.openReport = () => {
         const count = parseInt(p.count) || 1;
         totalLessons += count;
         stats[p.teacher] = (stats[p.teacher] || 0) + count;
-        html += `<tr><td style="${tdStyle}">${e.start.toLocaleDateString()}</td><td style="${tdStyle}"><b>${p.teacher}</b></td><td style="${tdStyle}">${p.baseTitle} (${p.sClass})</td><td style="${tdStyle}">${count}</td></tr>`;
+        html += `<tr><td style="${tdStyle}">${e.start.toLocaleDateString()}</td><td style="${tdStyle}"><b>${p.teacher}</b></td><td style="${tdStyle}">${p.baseTitle}</td><td style="${tdStyle}">${count}</td></tr>`;
     });
     
     html += `<tr style="background:#f9fafb; font-weight:bold;"><td colspan="3" style="${tdStyle}; text-align:right;">РАЗОМ:</td><td style="${tdStyle}">${totalLessons}</td></tr></tbody></table></div>`;

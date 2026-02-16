@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Liceum Manager v8.0 (Final)</title>
+  <title>Liceum Manager v8.0 (Updated)</title>
   <link rel="stylesheet" href="style.css">
   
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
@@ -134,14 +134,42 @@
                 <span class="switch-label">⛔ Технічна перерва</span>
             </label>
         </div>
+        
         <div id="bookingFields">
-            <div class="input-group"><label>Предмет</label><input type="text" id="eventTitle" placeholder="Назва..."></div>
-            <div class="input-grid">
-                <div class="input-group"><label>Вчитель</label><select id="eventTeacher"></select></div>
-                <div class="input-group"><label>Клас</label><input type="text" id="eventClass" placeholder="Напр. 10-А"></div>
+            
+            <div class="input-group">
+                <label>Предмет</label>
+                <input type="text" id="eventSubject" list="subjectsList" placeholder="Оберіть або введіть...">
+                <datalist id="subjectsList">
+                    <option value="Математика">
+                    <option value="Українська мова">
+                    <option value="Англійська мова">
+                    <option value="Історія України">
+                    <option value="Фізика">
+                    <option value="Хімія">
+                    <option value="Біологія">
+                    <option value="Географія">
+                    <option value="Інформатика">
+                    <option value="Мистецтво">
+                    <option value="Початкова школа">
+                    <option value="Підготовка до школи">
+                </datalist>
             </div>
+
             <div class="input-grid">
-                <div class="input-group"><label>Кількість</label><input type="number" id="eventCount" value="1" min="1"></div>
+                <div class="input-group">
+                    <label>Клас / Група</label>
+                    <input type="text" id="eventClass" placeholder="Напр: 10-А">
+                </div>
+                
+                <div class="input-group">
+                    <label>Вчитель</label>
+                    <select id="eventTeacher"></select>
+                </div>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group"><label>Кількість уроків</label><input type="number" id="eventCount" value="1" min="1"></div>
                 <div class="input-group">
                     <label>Колір</label>
                     <select id="eventColor">
@@ -153,7 +181,7 @@
                 </div>
             </div>
         </div>
-      </div>
+        </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal()">Скасувати</button>
         <button class="btn btn-primary" onclick="confirmBooking()">Зберегти</button>
@@ -214,19 +242,11 @@
         <div class="modal-body">
             <p style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 10px; font-size: 14px;">
               <b>1. Створення уроку:</b><br>
-              Оберіть діапазон у календарі (на телефоні просто натисніть). Вкажіть предмет, клас та ім'я.
+              Оберіть час. Вкажіть предмет (зі списку або свій) та клас.
             </p>
             <p style="background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 10px; font-size: 14px;">
               <b>2. Форс-мажор:</b><br>
-              Натисніть на урок -> "Змінити статус" -> оберіть варіант (наприклад, "Запізнююсь").
-            </p>
-            <p style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 10px; font-size: 14px;">
-              <b>3. Видалення:</b><br>
-              Видалення доступне <b>15 хвилин</b> після створення. Далі — тільки статус "Скасовано".
-            </p>
-            <p style="background: #f3f4f6; padding: 12px; border-radius: 8px; border-left: 4px solid #6b7280; margin-bottom: 0; font-size: 14px;">
-              <b>4. Технічна пауза:</b><br>
-              Сірі штриховані блоки. Студія зайнята адміністратором.
+              Натисніть на урок -> "Змінити статус" -> оберіть варіант.
             </p>
         </div>
         <div class="modal-footer">
