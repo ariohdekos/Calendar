@@ -77,3 +77,33 @@ summary::-webkit-details-marker { display: none; }
   .sidebar { display: none; } /* Приховати на моб */
   .modern-modal { width: 90% !important; }
 }
+/* Стилі звіту */
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+}
+
+.report-table th, .report-table td {
+    border: 1px solid #E5E7EB;
+    padding: 12px;
+    font-size: 14px;
+    text-align: left;
+}
+
+.report-table th {
+    background: #F9FAFB;
+    font-weight: 700;
+    color: #374151;
+}
+
+.color-picker {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.color-picker:hover { transform: scale(1.1); }
