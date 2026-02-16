@@ -19,14 +19,12 @@ try {
 const db = firebase.database();
 
 // Глобальні змінні
-let USERS = {};
-let currentUser = null;
-let calendar = null;
-let selectedSlot = null;
-let clickedEvent = null;
-let activeFilter = null;
-let reportChartInstance = null;
-let currentTeachersList = [];
+// Замініть let USERS = {}; на це:
+let USERS = {
+    "777": { role: "Технік", level: "tech", color: "#6B7280" },
+    "888": { role: "Адмін", level: "admin", color: "#4F46E5" },
+    "999": { role: "Викладач", level: "teacher", color: "#10B981" }
+};
 
 // ==========================================
 // 2. ВХІД / ВИХІД
