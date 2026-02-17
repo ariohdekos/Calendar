@@ -1,154 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-:root {
-  --primary: #4F46E5;
-  --danger: #EF4444;
-  --bg: #F3F4F6;
-  --text: #1F2937;
-}
-
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%; /* ВАЖЛИВО ДЛЯ КАЛЕНДАРЯ */
-  font-family: 'Inter', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  overflow: hidden; /* Щоб не було подвійних скролів */
-}
-
-/* --- ЕКРАН ВХОДУ --- */
-#loginScreen {
-  position: fixed;
-  inset: 0;
-  background: #111827;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 5000;
-}
-.login-box {
-  background: white;
-  padding: 30px;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 320px;
-  text-align: center;
-}
-.login-box input {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-sizing: border-box;
-}
-
-/* --- ВЕРХНЯ ПАНЕЛЬ --- */
-#topBar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 60px;
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 15px;
-  z-index: 2000;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  box-sizing: border-box;
-}
-.brand { font-weight: 700; color: var(--primary); font-size: 16px; }
-.user-controls { display: flex; gap: 8px; align-items: center; }
-
-/* --- ОСНОВНИЙ КОНТЕЙНЕР (ВАЖЛИВЕ ВИПРАВЛЕННЯ) --- */
-#mainContainer {
-  padding-top: 70px; /* Відступ під верхню панель */
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-bottom: 10px;
-  height: 100vh; /* На всю висоту екрану */
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-}
-
-#calendar {
-  flex-grow: 1; /* Розтягується на все вільне місце */
-  background: white;
-  border-radius: 12px;
-  padding: 5px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  overflow: hidden; /* Щоб календар скролився всередині */
-}
-
-/* --- МОДАЛЬНІ ВІКНА --- */
-.overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 3000;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px);
-}
-.modal-content {
-  background: white;
-  width: 95%;
-  max-width: 450px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh; /* Щоб не вилазило за екран */
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-}
-.modal-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+:root { --primary: #4F46E5; --danger: #EF4444; --bg: #F3F4F6; --text: #1F2937; }
+body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent; }
+#loginScreen { position: fixed; inset: 0; background: #111827; display: flex; align-items: center; justify-content: center; z-index: 5000; }
+.login-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 320px; text-align: center; }
+.login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+#topBar { position: fixed; top: 0; width: 100%; height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 2000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); box-sizing: border-box; }
+.brand { font-weight: 700; color: var(--primary); font-size: 18px; }
+.user-controls { display: flex; gap: 10px; align-items: center; }
+#mainContainer { padding: 70px 10px 10px 10px; height: 100vh; box-sizing: border-box; }
+#calendar { height: 100%; background: white; border-radius: 12px; padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.modal-content { background: white; width: 95%; max-width: 450px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
+.modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
 .modal-header h3 { margin: 0; font-size: 18px; }
 .modal-body { padding: 20px; overflow-y: auto; }
-.modal-footer {
-  padding: 15px 20px;
-  border-top: 1px solid #eee;
-  background: #f9fafb;
-  border-radius: 0 0 16px 16px;
-}
-
-/* ЕЛЕМЕНТИ ФОРМИ */
+.modal-footer { padding: 15px 20px; border-top: 1px solid #eee; background: #f9fafb; }
 .input-group { margin-bottom: 12px; }
 .input-group label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 4px; }
-.form-control {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 16px; /* Щоб на iPhone не зумило */
-  box-sizing: border-box;
-}
+.form-control { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-/* КНОПКИ */
-.btn { border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+.btn { border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: 0.2s; }
 .btn-primary { background: var(--primary); color: white; }
 .btn-secondary { background: #E5E7EB; color: #374151; }
 .btn-danger { background: #FEE2E2; color: var(--danger); border: 1px solid var(--danger); width: 100%; padding: 10px; border-radius: 8px; margin-top: 10px; cursor: pointer;}
 .btn-logout { background: #F3F4F6; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
-.btn-icon { background: none; border: none; font-size: 22px; cursor: pointer; padding: 5px; }
+.btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; }
 .badge { background: #E0E7FF; color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-
-/* СТАТУСИ */
-.btn-status { background: white; border: 1px solid #ddd; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; flex-grow: 1; margin-bottom: 5px;}
+.btn-status { background: white; border: 1px solid #ddd; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; flex-grow: 1; }
 .btn-status:hover { background: #f9fafb; }
-
-/* FullCalendar Стилі */
 .fc-event { border: none !important; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; }
-.fc-toolbar-title { font-size: 18px !important; }
-.fc-button { font-size: 12px !important; padding: 6px 10px !important; text-transform: capitalize; }
-.fc .fc-timegrid-slot { height: 2.5em; } /* Висота клітинок */
+.fc-toolbar-title { font-size: 16px !important; }
+.fc-header-toolbar { margin-bottom: 10px !important; }
+.fc-button { font-size: 12px !important; padding: 4px 8px !important; }
+@media (max-width: 768px) { .fc-toolbar { flex-wrap: wrap; gap: 5px; } .modal-content { width: 100%; height: 100%; border-radius: 0; max-height: 100vh; } }
