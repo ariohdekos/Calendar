@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net;">
   <title>Liceum Manager v9.2</title>
   <link rel="stylesheet" href="style.css">
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
@@ -60,23 +59,18 @@
         </details>
       </div>
 
-      <div class="sidebar-panel">
-        <details>
-          <summary>🔍 Фільтр по вчителю</summary>
-          <div class="panel-content">
-             <div id="filterList"></div>
-             <button class="btn btn-light" onclick="resetFilters()" style="width:100%; margin-top:10px;">Показати всіх</button>
-          </div>
-        </details>
-      </div>
+      <div class="sidebar-panel" id="settingsBtn" style="display:none; margin-top: 10px;">
+  <button class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'" style="width:100%">⚙️ Налаштування</button>
+</div>
 
       <div class="sidebar-panel" id="reportBtn" style="display:none; margin-top: 15px;">
         <button class="btn btn-primary" onclick="openReport()" style="width:100%">📊 Звітність</button>
       </div>
 
-   <div class="sidebar-panel" id="settingsBtn" style="display:none; margin-top: 10px;">
-  <button class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'" style="width:100%">⚙️ Налаштування</button>
-</div>
+      <div class="sidebar-panel" id="settingsBtn" style="display:none; margin-top: 10px;">
+        <button class="btn btn-secondary" onclick="openSettings()" style="width:100%">⚙️ Налаштування</button>
+      </div>
+    </div>
 
     <div class="calendar-container">
         <div id="calendar"></div>
@@ -165,7 +159,7 @@
 
   <div id="settingsModal" class="overlay">
     <div class="modal-content modern-modal">
-      <div class="modal-header"><h3>⚙️ Налаштування</h3><button class="btn-logout" onclick="document.getElementById('settingsModal').style.display='none'">✕</button></div>
+    <div class="modal-header"><h3>⚙️ Налаштування</h3><button class="btn-logout" onclick="document.getElementById('settingsModal').style.display='none'">✕</button></div>
       <div class="modal-body">
         <h4>Telegram</h4>
         <input type="text" id="tgToken" placeholder="Bot Token" style="width:100%; margin-bottom:10px;">
