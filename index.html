@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Liceum Manager v9.2</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" href="/favicon.jpg">
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -35,7 +34,6 @@
   <div class="container" id="mainApp" style="display: none;">
     
     <div class="sidebar">
-      
       <div class="sidebar-panel">
         <details open>
             <summary>❓ Інструкція</summary>
@@ -46,11 +44,11 @@
                 </div>
                 <div style="background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 10px; font-size: 13px;">
                   <b>2. Форс-мажор:</b><br>
-                  Натисніть на урок -> "Змінити статус" -> оберіть варіант.
+                  Натисніть на урок -> "Статус" -> оберіть варіант.
                 </div>
                 <div style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 10px; font-size: 13px;">
                   <b>3. Видалення:</b><br>
-                  Доступне <b>15 хвилин</b> після створення. Далі — тільки через Адміна.
+                  Доступне <b>15 хвилин</b>. Далі — тільки через Адміна.
                 </div>
                 <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; border-left: 4px solid #9ca3af; font-size: 13px;">
                   <b>4. Технічна перерва:</b><br>
@@ -60,21 +58,65 @@
         </details>
       </div>
 
-      <div class="sidebar-panel" id="settingsBtn" style="display:none; margin-top: 10px;">
-  <button class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'" style="width:100%">⚙️ Налаштування</button>
-</div>
+      <div class="sidebar-panel">
+        <details>
+          <summary>🔍 Фільтр вчителів</summary>
+          <div class="panel-content">
+             <div id="filterList"></div>
+             <button class="btn btn-light" onclick="resetFilters()">Показати всіх</button>
+          </div>
+        </details>
+      </div>
 
-      <div class="sidebar-panel" id="reportBtn" style="display:none; margin-top: 15px;">
+      <div class="sidebar-panel" id="reportBtn" style="display:none;">
         <button class="btn btn-primary" onclick="openReport()" style="width:100%">📊 Звітність</button>
       </div>
 
-      <div class="sidebar-panel" id="settingsBtn" style="display:none; margin-top: 10px;">
+      <div class="sidebar-panel" id="settingsBtn" style="display:none;">
         <button class="btn btn-secondary" onclick="openSettings()" style="width:100%">⚙️ Налаштування</button>
       </div>
     </div>
 
     <div class="calendar-container">
         <div id="calendar"></div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="overlay">
+    <div class="modal-content modern-modal">
+      <div class="modal-header">
+        <h3>⚙️ Налаштування</h3>
+        <button class="btn-logout" onclick="closeSettings()">✕</button>
+      </div>
+      <div class="modal-body">
+        <h4>Telegram Повідомлення</h4>
+        <div class="input-group">
+            <label>Bot Token</label>
+            <input type="text" id="tgToken" placeholder="Вставте токен...">
+        </div>
+        <div class="input-group">
+            <label>Chat ID</label>
+            <input type="text" id="tgChatId" placeholder="ID чату...">
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()" style="width:100%">Зберегти TG</button>
+        
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <h4>🔑 Керування паролями</h4>
+        <div class="input-group">
+            <label>Роль для зміни</label>
+            <select id="passRoleSelector">
+                <option value="teacher">Викладач</option>
+                <option value="admin">Адмін</option>
+                <option value="tech">Технік</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Новий код (цифри)</label>
+            <input type="text" id="newPassCode" placeholder="Напр. 555">
+        </div>
+        <button class="btn btn-danger" onclick="updatePassInDB()" style="width:100%">Оновити пароль</button>
+      </div>
     </div>
   </div>
 
@@ -96,10 +138,7 @@
                 <label>Предмет</label>
                 <input type="text" id="eventSubject" list="subjectsList" placeholder="Оберіть предмет...">
                 <datalist id="subjectsList">
-                    <option value="Математика"></option>
-                    <option value="Українська мова"></option>
-                    <option value="Англійська мова"></option>
-                    <option value="Історія України"></option>
+                    <option value="Математика"></option><option value="Українська мова"></option><option value="Англійська мова"></option><option value="Історія України"></option>
                 </datalist>
             </div>
             <div class="input-grid">
@@ -109,9 +148,7 @@
             <div class="input-grid">
                 <div class="input-group"><label>К-сть уроків</label><input type="number" id="eventCount" value="1"></div>
                 <div class="input-group"><label>Колір</label><select id="eventColor">
-                    <option value="#4F46E5">🔵 Стандарт</option>
-                    <option value="#F59E0B">🟠 Важливо</option>
-                    <option value="#EC4899">🌸 Додатковий</option>
+                    <option value="#4F46E5">🔵 Стандарт</option><option value="#F59E0B">🟠 Важливо</option><option value="#EC4899">🌸 Додатковий</option>
                 </select></div>
             </div>
         </div>
@@ -154,25 +191,6 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" onclick="window.print()">🖨 Друкувати</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="settingsModal" class="overlay">
-    <div class="modal-content modern-modal">
-    <div class="modal-header"><h3>⚙️ Налаштування</h3><button class="btn-logout" onclick="document.getElementById('settingsModal').style.display='none'">✕</button></div>
-      <div class="modal-body">
-        <h4>Telegram</h4>
-        <input type="text" id="tgToken" placeholder="Bot Token" style="width:100%; margin-bottom:10px;">
-        <input type="text" id="tgChatId" placeholder="Chat ID" style="width:100%;">
-        <button class="btn btn-primary" onclick="saveSettings()" style="width:100%; margin-top:10px;">Зберегти TG</button>
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        <h4>Коди доступу</h4>
-        <select id="passRoleSelector" style="width:100%; margin-bottom:10px;">
-            <option value="teacher">Викладач</option><option value="admin">Адмін</option><option value="tech">Технік</option>
-        </select>
-        <input type="text" id="newPassCode" placeholder="Новий код" style="width:100%;">
-        <button class="btn btn-danger" onclick="updatePassInDB()" style="width:100%; margin-top:10px;">Змінити код</button>
       </div>
     </div>
   </div>
