@@ -184,7 +184,9 @@
   <div id="reportOverlay" class="overlay">
     <div class="modal-content" style="max-width:800px; width:95%;">
       <div class="modal-header"><h3>📊 Звітність</h3><button class="btn-logout" onclick="closeReport()">✕</button></div>
-      <div id="reportPrintArea" style="padding:20px; max-height:60vh; overflow-y:auto;">
+  <div id="reportPrintArea" style="padding:20px; max-height:60vh; overflow-y:auto;">
+        <div id="reportSummary" style="margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;"></div>
+        
         <table class="report-table" style="width:100%; border-collapse:collapse;">
           <thead><tr style="background:#f3f4f6;"><th>Вчитель</th><th>Дата</th><th>Предмет</th><th>Клас</th><th>Уроків</th><th>Підпис</th></tr></thead>
           <tbody id="reportTableBody"></tbody>

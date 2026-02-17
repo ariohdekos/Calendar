@@ -285,17 +285,48 @@ window.toggleSidebar = () => {
 
 // Звіти
 window.openReport = () => {
-    const events = calendar.getEvents().filter(e => e.extendedProps.type === 'lesson');
-    document.getElementById('reportTableBody').innerHTML = events.map(e => `
+    // 1. Отримуємо та фільтруємо уроки
+    const events = calendar.getEvents()
+        .filter(e => e.extendedProps.type === 'lesson')
+        .sort((a, b) => a.start - b.start); // Сортуємо від старих до нових
+
+    // 2. Об'єкт для підрахунку статистики
+    const monthlyStats = {};
+
+    // 3. Формуємо рядки таблиці та рахуємо статистику
+    const tableRows = events.map(e => {
+        const date = e.start;
+        const count = parseInt(e.extendedProps.count) || 1; // Кількість уроків у запису
+        
+        // Створюємо ключ "Місяць Рік" (напр. "Лютий 2024")
+        let monthKey = date.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
+        monthKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1); // Робимо першу букву великою
+
+        // Додаємо до статистики
+        if (!monthlyStats[monthKey]) monthlyStats[monthKey] = 0;
+        monthlyStats[monthKey] += count;
+
+        return `
         <tr>
             <td>${e.extendedProps.teacher}</td>
-            <td>${e.start.toLocaleDateString()}</td>
+            <td>${date.toLocaleDateString('uk-UA')}</td>
             <td>${e.extendedProps.subject}</td>
             <td>${e.extendedProps.className}</td>
-            <td>${e.extendedProps.count}</td>
+            <td style="text-align:center; font-weight:bold;">${count}</td>
             <td style="border-bottom: 1px solid #000; width: 50px;"></td>
-        </tr>
-    `).join('');
+        </tr>`;
+    }).join('');
+
+    // 4. Формуємо HTML для блоку статистики
+    let summaryHtml = '<h4 style="margin-top:0; margin-bottom:10px;">📅 Підсумок по місяцях:</h4><ul style="margin:0; padding-left:20px;">';
+    for (const [month, total] of Object.entries(monthlyStats)) {
+        summaryHtml += `<li style="margin-bottom:5px;"><b>${month}:</b> ${total} уроків</li>`;
+    }
+    summaryHtml += '</ul>';
+
+    // 5. Виводимо все на сторінку
+    document.getElementById('reportSummary').innerHTML = summaryHtml;
+    document.getElementById('reportTableBody').innerHTML = tableRows;
     document.getElementById('reportOverlay').style.display = 'flex';
 };
 window.closeReport = () => document.getElementById('reportOverlay').style.display = 'none';
