@@ -73,10 +73,9 @@
         <button class="btn btn-primary" onclick="openReport()" style="width:100%">📊 Звітність</button>
       </div>
 
-      <div class="sidebar-panel" id="settingsBtn" style="display:none; margin-top: 10px;">
-        <button class="btn btn-secondary" onclick="openSettings()" style="width:100%">⚙️ Налаштування</button>
-      </div>
-    </div>
+   <div class="sidebar-panel" id="settingsBtn" style="display:none; margin-top: 10px;">
+  <button class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'" style="width:100%">⚙️ Налаштування</button>
+</div>
 
     <div class="calendar-container">
         <div id="calendar"></div>
@@ -165,7 +164,7 @@
 
   <div id="settingsModal" class="overlay">
     <div class="modal-content modern-modal">
-      <div class="modal-header"><h3>⚙️ Налаштування</h3><button class="btn-logout" onclick="closeSettings()">✕</button></div>
+      <div class="modal-header"><h3>⚙️ Налаштування</h3><button class="btn-logout" onclick="document.getElementById('settingsModal').style.display='none'">✕</button></div>
       <div class="modal-body">
         <h4>Telegram</h4>
         <input type="text" id="tgToken" placeholder="Bot Token" style="width:100%; margin-bottom:10px;">
