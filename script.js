@@ -2,13 +2,14 @@
 // 1. КОНФІГУРАЦІЯ (ЗАМІНИ НА СВОЇ ДАНІ!)
 // ==========================================
 const firebaseConfig = {
-    apiKey: "ВАШ_API_KEY",
-    authDomain: "ВАШ_PROJECT.firebaseapp.com",
-    databaseURL: "ВАШ_DATABASE_URL",
-    projectId: "ВАШ_PROJECT_ID",
-    storageBucket: "...",
-    messagingSenderId: "...",
-    appId: "..."
+   apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
+  authDomain: "liceum-eit-manager.firebaseapp.com",
+  databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "liceum-eit-manager",
+  storageBucket: "liceum-eit-manager.firebasestorage.app",
+  messagingSenderId: "854455059262",
+  appId: "1:854455059262:web:e6282bed63182559c5a26f",
+  measurementId: "G-NKS31DZ3MK"
 };
 
 firebase.initializeApp(firebaseConfig);
