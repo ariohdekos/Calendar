@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Liceum Manager v9.0</title>
+  <title>Liceum Manager v9.1</title>
   <link rel="stylesheet" href="style.css">
+  
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <script src="script.js" defer></script>
@@ -20,7 +22,7 @@
     </div>
   </div>
 
-<div id="topBar" style="display: none;">
+  <div id="topBar" style="display: none;">
     <div class="brand">LICEUM MANAGER</div>
     <div class="user-controls">
       <span id="roleBadge" class="badge"></span> 
@@ -32,134 +34,183 @@
   <div id="statusBar" style="display: none;"></div>
 
   <div class="container" id="mainApp" style="display: none;">
-    <div class="sidebar">
-      <button class="btn btn-success" style="width:100%; margin-bottom:10px; font-weight:bold;" onclick="document.getElementById('instructionModalOverlay').style.display='flex'">📖 ІНСТРУКЦІЯ (ПРОЧИТАТИ)</button>
-      <button id="reportBtn" class="btn btn-primary" style="width:100%; margin-bottom:10px; display:none;" onclick="openReport()">📊 Звітність</button>
-      <button id="settingsBtn" class="btn btn-secondary" style="width:100%; margin-bottom:20px; display:none;" onclick="document.getElementById('settingsModal').style.display='flex'">⚙️ Налаштування</button>
+    <div id="calendar"></div>
 
-      <h3>Фільтр викладачів</h3>
-      <div id="filterList" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:15px;"></div>
-      <button class="btn btn-light" onclick="resetFilters()">Скинути фільтр</button>
+    <div class="sidebar">
+      
+      <div class="sidebar-panel">
+        <details open>
+            <summary>❓ Інструкція</summary>
+            <div class="panel-content">
+                <p style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 10px; font-size: 13px; margin-top:0;">
+                  <b>1. Створення:</b><br>
+                  Натисніть на час у календарі. Введіть предмет та клас.
+                </p>
+            
+                <p style="background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 10px; font-size: 13px;">
+                  <b>2. Статус (Форс-мажор):</b><br>
+                  Натисніть на свій урок -> змініть статус (наприклад "Запізнююсь").
+                </p>
+            
+                <p style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 10px; font-size: 13px;">
+                  <b>3. Видалення:</b><br>
+                  Доступне тільки протягом <b>15 хвилин</b> після створення. Далі — тільки через Адміна.
+                </p>
+            
+                <p style="background: #f3f4f6; padding: 12px; border-radius: 8px; border-left: 4px solid #9ca3af; margin-bottom: 0; font-size: 13px;">
+                  <b>4. Технічна перерва:</b><br>
+                  Сірі блоки — студія зайнята адміністратором.
+                </p>
+            </div>
+        </details>
+      </div>
+
+      <div class="sidebar-panel">
+        <details>
+          <summary>🔍 Фільтр по вчителю</summary>
+          <div class="panel-content">
+             <div class="filter-container" id="filterList"></div>
+             <button class="btn btn-light" onclick="resetFilters()">Показати всіх</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="sidebar-panel" id="reportBtn" style="display:none;">
+        <div class="panel-content">
+            <button class="btn btn-primary" onclick="openReport()">📊 Звітність</button>
+        </div>
+      </div>
+
+      <div class="sidebar-panel" id="settingsBtn" style="display:none;">
+        <div class="panel-content">
+            <button class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'">⚙️ Налаштування</button>
+        </div>
+      </div>
     </div>
-    <div class="calendar-container"><div id="calendar"></div></div>
   </div>
 
   <div id="modalOverlay" class="overlay">
     <div class="modal-content modern-modal">
-      <div class="modal-header"><h3>Новий запис</h3></div>
+      <div class="modal-header">
+        <h3>Новий запис</h3>
+        <button onclick="closeModal()" style="border:none; background:none; font-size:20px; cursor:pointer;">✕</button>
+      </div>
       <div class="modal-body">
-        <div id="techBlockOption" style="margin-bottom:15px; display:none;">
-            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; background:#fee2e2; padding:12px; border-radius:10px; border:1px solid #ef4444;">
-                <input type="checkbox" id="isTechBreak" onchange="toggleTechBreak(this.checked)"> 🛠 <b>ТЕХНІЧНА ПЕРЕРВА</b>
-            </label>
+        <div class="input-grid">
+            <div class="input-group"><label>Початок</label><input type="time" id="startTime"></div>
+            <div class="input-group"><label>Кінець</label><input type="time" id="endTime"></div>
         </div>
 
+        <div id="techBlockOption" style="margin-bottom: 15px; padding: 10px; background: #fee2e2; border-radius: 8px; display: none;">
+            <label class="switch">
+                <input type="checkbox" id="isTechBreak" onchange="toggleTechBreak(this.checked)">
+                <span class="slider"></span>
+                <span class="switch-label">⛔ Технічна перерва</span>
+            </label>
+        </div>
+        
         <div id="bookingFields">
-            <div class="input-grid">
-              <div class="input-group"><label>Предмет</label><input type="text" id="eventSubject" list="subjectsList" placeholder="Математика..."><datalist id="subjectsList"><option value="Математика"><option value="Укр. мова"><option value="Англ. мова"></datalist></div>
-              <div class="input-group"><label>Клас</label><input type="text" id="eventName" placeholder="11-А"></div>
-            </div>
-
-            <div class="input-grid">
-              <div class="input-group"><label>Початок</label><input type="time" id="startTime"></div>
-              <div class="input-group"><label>Кінець</label><input type="time" id="endTime"></div>
-            </div>
-
-            <div class="input-grid">
-              <div class="input-group"><label>Викладач</label><select id="eventTeacher" style="width:100%"></select></div>
-              <div class="input-group"><label>К-сть уроків</label><input type="number" id="eventCount" value="1" min="1"></div>
-            </div>
-
             <div class="input-group">
-              <label>Колір в календарі</label>
-              <div style="display: flex; gap: 10px;">
-                <div class="color-picker" style="background:#3b82f6; border:2px solid #000" onclick="selectColor(this, '#3b82f6')"></div>
-                <div class="color-picker" style="background:#10b981" onclick="selectColor(this, '#10b981')"></div>
-                <div class="color-picker" style="background:#f59e0b" onclick="selectColor(this, '#f59e0b')"></div>
-                <div class="color-picker" style="background:#ef4444" onclick="selectColor(this, '#ef4444')"></div>
-              </div>
-              <input type="hidden" id="eventColor" value="#3b82f6">
+                <label>Предмет</label>
+                <input type="text" id="eventSubject" list="subjectsList" placeholder="Оберіть або введіть...">
+                <datalist id="subjectsList">
+                    <option value="Математика">
+                    <option value="Українська мова">
+                    <option value="Англійська мова">
+                    <option value="Історія України">
+                    <option value="Фізика">
+                    <option value="Хімія">
+                    <option value="Біологія">
+                    <option value="Географія">
+                </datalist>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Клас</label>
+                    <input type="text" id="eventName" placeholder="Напр. 11-А">
+                </div>
+                <div class="input-group">
+                    <label>Вчитель</label>
+                    <select id="eventTeacher"></select>
+                </div>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group"><label>К-сть уроків</label><input type="number" id="eventCount" value="1"></div>
+                <div class="input-group">
+                    <label>Колір</label>
+                    <select id="eventColor">
+                        <option value="#4F46E5">🔵 Стандарт</option>
+                        <option value="#F59E0B">🟠 Важливо</option>
+                        <option value="#EC4899">🌸 Додатковий</option>
+                    </select>
+                </div>
             </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal()">Скасувати</button>
-        <button class="btn btn-primary" onclick="confirmBooking()">Зберегти запис</button>
+        <button class="btn btn-primary" onclick="confirmBooking()">Зберегти</button>
       </div>
     </div>
   </div>
 
-  <div class="panel-content">
-    <p style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 10px; font-size: 13px; margin-top:0;">
-      <b>1. Створення:</b><br>
-      Натисніть на час у календарі. Введіть предмет та клас.
-    </p>
-
-    <p style="background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 10px; font-size: 13px;">
-      <b>2. Статус (Форс-мажор):</b><br>
-      Натисніть на свій урок -> змініть статус (наприклад "Запізнююсь").
-    </p>
-
-    <p style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 10px; font-size: 13px;">
-      <b>3. Видалення:</b><br>
-      Доступне тільки протягом <b>15 хвилин</b> після створення. Далі — тільки через Адміна.
-    </p>
-
-    <p style="background: #f3f4f6; padding: 12px; border-radius: 8px; border-left: 4px solid #9ca3af; margin-bottom: 0; font-size: 13px;">
-      <b>4. Технічна перерва:</b><br>
-      Сірі блоки — студія зайнята адміністратором.
-    </p>
-</div>
-
   <div id="statusModalOverlay" class="overlay">
     <div class="modal-content modern-modal">
-        <div class="modal-header"><h3>Керування уроком</h3></div>
+        <div class="modal-header"><h3>Керування</h3></div>
         <div class="modal-body">
-            <h4 id="statusEventTitle">...</h4>
-            <div class="input-group">
-                <label>Попередити групу:</label>
-                <select id="eventStatus" style="width:100%; height:45px;">
-                    <option value="">🟢 Все за планом</option>
-                    <option value="✅ Проведено">✅ Проведено</option>
-                    <option value="🏃 Запізнююсь">🏃 Запізнююсь</option>
-                    <option value="❌ Не прийду">❌ Не прийду</option>
-                    <option value="🚫 Скасовано">🚫 Скасовано</option>
-                </select>
-            </div>
+            <h4 id="statusEventTitle">Назва уроку</h4>
+            <select id="eventStatus">
+                <option value="">🟢 Все за планом</option>
+                <option value="✅ Проведено">✅ Проведено</option>
+                <option value="🏃 Запізнююсь (10 хв)">🏃 Запізнююсь (10 хв)</option>
+                <option value="❌ Скасовано">❌ Скасовано</option>
+            </select>
         </div>
-        <div class="modal-footer" style="flex-direction:column; gap:10px;">
-            <button class="btn btn-primary" style="width:100%;" onclick="applyStatus()">Оновити статус</button>
-            <button id="btnDeleteEvent" class="btn btn-danger" style="width:100%; display:none;" onclick="handleDelete()">🗑 Видалити запис</button>
-            <button class="btn btn-secondary" style="width:100%;" onclick="closeStatusModal()">Закрити</button>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="applyStatus()">Оновити</button>
+            <button id="btnDeleteEvent" class="btn btn-danger" onclick="handleDelete()">Видалити</button>
+            <button class="btn btn-secondary" onclick="closeStatusModal()">Закрити</button>
         </div>
     </div>
   </div>
 
   <div id="reportOverlay" class="overlay">
-    <div class="modal-content" style="max-width: 95%; width: 900px; max-height: 90vh; overflow-y:auto;">
-      <div class="modal-header"><h3>📊 Звітність по уроках</h3><button class="btn btn-secondary" onclick="window.printReport()">🖨️ Друк</button><button class="btn btn-danger" onclick="closeReport()">✕</button></div>
+    <div class="modal-content" style="width: 95%; max-width: 800px; height: 90vh; overflow-y: auto;">
+      <div class="modal-header"><h3>📊 Звітність</h3><button class="btn btn-danger" onclick="closeReport()">✕</button></div>
       <div id="reportPrintArea" style="padding: 20px;">
         <table class="report-table">
           <thead><tr><th>ПІП Викладача</th><th>Дата</th><th>Предмет</th><th>Клас</th><th>К-сть уроків</th><th>Підпис</th></tr></thead>
           <tbody id="reportTableBody"></tbody>
         </table>
       </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="printReport()">🖨 Друкувати</button>
+      </div>
     </div>
   </div>
 
   <div id="settingsModal" class="overlay">
     <div class="modal-content modern-modal">
-      <div class="modal-header"><h3>⚙️ Налаштування (Технік)</h3></div>
+      <div class="modal-header"><h3>⚙️ Налаштування (Технік)</h3><button onclick="document.getElementById('settingsModal').style.display='none'">✕</button></div>
       <div class="modal-body">
-        <h4>Telegram</h4>
-        <input type="text" id="tgToken" placeholder="Bot Token">
-        <input type="text" id="tgChatId" placeholder="Chat ID" style="margin-top:10px;">
-        <h4 style="margin-top:20px;">🔑 Паролі</h4>
-        <select id="passRoleSelector" style="width:100%; margin-bottom:10px;"><option value="teacher">Викладач</option><option value="admin">Адмін</option><option value="tech">Технік</option></select>
-        <input type="text" id="newPassCode" placeholder="Новий код">
-        <button class="btn btn-light" onclick="updatePassInDB()" style="margin-top:10px;">Оновити код</button>
+        <h4>Telegram Bot</h4>
+        <input type="text" id="tgToken" placeholder="Bot Token" style="width:100%; margin-bottom:10px; padding:8px;">
+        <input type="text" id="tgChatId" placeholder="Chat ID" style="width:100%; padding:8px;">
+        <button class="btn btn-primary" onclick="saveSettings()" style="width:100%; margin-top:10px;">Зберегти Telegram</button>
+        
+        <hr>
+        
+        <h4>🔑 Зміна кодів доступу</h4>
+        <select id="passRoleSelector" style="width:100%; margin-bottom:10px; padding:8px;">
+            <option value="teacher">Викладач (Зелений)</option>
+            <option value="admin">Адмін (Синій)</option>
+            <option value="tech">Технік (Сірий)</option>
+        </select>
+        <input type="text" id="newPassCode" placeholder="Новий числовий код" style="width:100%; padding:8px; margin-bottom:10px;">
+        <button class="btn btn-danger" onclick="updatePassInDB()" style="width:100%;">Оновити код</button>
       </div>
-      <div class="modal-footer"><button class="btn btn-primary" onclick="saveSettings()">Зберегти</button><button class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='none'">Закрити</button></div>
     </div>
   </div>
 
