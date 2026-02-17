@@ -14,8 +14,8 @@ html, body {
   font-family: 'Inter', sans-serif;
   background: var(--bg);
   color: var(--text);
-  overflow: hidden; /* Щоб не було подвійних скролів */
-  -webkit-tap-highlight-color: transparent; /* Прибирає синій клік на мобільному */
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* --- ЕКРАН ВХОДУ --- */
@@ -28,14 +28,12 @@ html, body {
 .login-box {
   background: white; padding: 30px;
   border-radius: 20px; width: 90%; max-width: 340px; text-align: center;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
 .login-box input {
   width: 100%; padding: 14px; margin: 15px 0;
   border: 1px solid #ddd; border-radius: 12px;
   font-size: 16px; box-sizing: border-box; outline: none;
 }
-.login-box input:focus { border-color: var(--primary); }
 
 /* --- ВЕРХНЯ ПАНЕЛЬ --- */
 #topBar {
@@ -45,150 +43,96 @@ html, body {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 15px; z-index: 2000;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  box-sizing: border-box;
 }
-.brand { font-weight: 800; color: var(--primary); font-size: 16px; letter-spacing: -0.5px; }
+.brand { font-weight: 800; color: var(--primary); font-size: 16px; }
 .user-controls { display: flex; gap: 8px; align-items: center; }
 
 /* --- ОСНОВНИЙ КОНТЕЙНЕР --- */
 #mainContainer {
-  padding-top: calc(var(--toolbar-height) + 10px);
-  padding-left: 10px; padding-right: 10px; padding-bottom: 10px;
+  padding-top: calc(var(--toolbar-height) + 5px);
+  padding-left: 5px; padding-right: 5px; padding-bottom: 5px;
   height: 100vh; box-sizing: border-box;
   display: flex; flex-direction: column;
 }
 
 #calendar {
   flex-grow: 1; background: white;
-  border-radius: 16px; padding: 5px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
   overflow: hidden;
 }
 
-/* --- МОДАЛЬНІ ВІКНА (АДАПТИВНІ) --- */
+/* --- МОДАЛЬНІ ВІКНА --- */
 .overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.6); z-index: 3000;
   align-items: center; justify-content: center;
   backdrop-filter: blur(3px);
-  padding: 10px;
 }
 .modal-content {
-  background: white; width: 100%; max-width: 450px;
+  background: white; width: 95%; max-width: 450px;
   border-radius: 20px; display: flex; flex-direction: column;
-  max-height: 90vh; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-  animation: slideUp 0.2s ease-out;
+  max-height: 90vh;
 }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-.modal-header { padding: 18px 24px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
-.modal-header h3 { margin: 0; font-size: 18px; font-weight: 700; }
-.modal-body { padding: 20px 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.modal-footer { padding: 16px 24px; border-top: 1px solid #f3f4f6; background: #fafafa; border-radius: 0 0 20px 20px; }
+.modal-header { padding: 15px 20px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { margin: 0; font-size: 18px; }
+.modal-body { padding: 20px; overflow-y: auto; }
+.modal-footer { padding: 15px; border-top: 1px solid #f3f4f6; background: #fafafa; border-radius: 0 0 20px 20px; }
 
 /* ЕЛЕМЕНТИ ФОРМИ */
-.input-group { margin-bottom: 16px; }
-.input-group label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 6px; text-transform: uppercase; }
+.input-group { margin-bottom: 15px; }
+.input-group label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 5px; }
 .form-control {
   width: 100%; padding: 12px;
   border: 1px solid #e5e7eb; border-radius: 10px;
-  font-size: 16px; /* 16px запобігає зуму на iPhone */
-  box-sizing: border-box; background: #fff; appearance: none;
+  font-size: 16px; box-sizing: border-box;
 }
-.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* КНОПКИ */
-.btn { border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 15px; transition: 0.1s; }
-.btn:active { transform: scale(0.98); }
+.btn { border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 15px; width: 100%; }
 .btn-primary { background: var(--primary); color: white; }
 .btn-secondary { background: #f3f4f6; color: #374151; }
-.btn-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; width: 100%; padding: 12px; border-radius: 10px; margin-top: 15px; }
-.btn-icon { background: #f3f4f6; width: 40px; height: 40px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
-.btn-logout { background: #f3f4f6; color: #374151; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
+.btn-danger { background: #fee2e2; color: #dc2626; margin-top: 10px; }
+.btn-icon { background: #f3f4f6; width: 36px; height: 36px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
+.btn-logout { background: #f3f4f6; border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .badge { background: #e0e7ff; color: var(--primary); padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.btn-status { background: white; border: 1px solid #e5e7eb; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px; flex-grow: 1; margin-bottom: 5px; width: 100%; }
 
-.btn-status { background: white; border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 13px; flex-grow: 1; margin-bottom: 8px; font-weight: 500; }
-
-/* --- FullCalendar Стилізація --- */
-.fc { font-family: 'Inter', sans-serif; }
+/* --- FullCalendar Base --- */
 .fc-toolbar-title { font-size: 18px !important; font-weight: 700; }
-.fc-button { border-radius: 8px !important; font-weight: 600 !important; text-transform: capitalize; padding: 6px 12px !important; }
-.fc-event { border: none !important; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 12px; padding: 2px; }
-.fc-timegrid-slot { height: 45px !important; } /* Висота слоту (зручно для пальця) */
-.fc-timegrid-now-indicator-line { border-color: var(--danger); border-width: 2px; }
-.fc-timegrid-now-indicator-arrow { border-color: var(--danger); }
+.fc-button { border-radius: 8px !important; font-weight: 600 !important; text-transform: capitalize; }
+.fc-event { border: none !important; border-radius: 4px; padding: 2px; font-size: 12px; }
 
-/* --- АДАПТИВНІСТЬ (МЕДІА ЗАПИТИ) --- */
+/* --- АДАПТИВНІСТЬ (ВАЖЛИВО!) --- */
 
-/* Мобільні телефони (до 600px) */
-/* --- МОБІЛЬНА АДАПТАЦІЯ (Книжкова орієнтація) --- */
 @media (max-width: 600px) {
-  
-  /* 1. Верхня панель (TopBar) */
-  #topBar {
-    padding: 0 10px; /* Менше відступів */
-    justify-content: center; /* Центруємо, якщо бренд схований */
-  }
-  .brand { display: none; } /* Прибираємо довгу назву */
-  .user-controls { width: 100%; justify-content: space-between; } /* Розтягуємо кнопки виходу/ролі */
+  /* 1. Верхня панель: ховаємо назву */
+  .brand { display: none; }
+  #topBar { justify-content: center; }
+  .user-controls { width: 100%; justify-content: space-between; }
 
-  /* 2. Шапка календаря (Два поверхи) */
+  /* 2. Шапка календаря: ДВА ПОВЕРХИ */
   .fc-header-toolbar {
-    display: flex;
-    flex-direction: column; /* Ставимо елементи в стовпчик */
-    gap: 5px;
-    margin-bottom: 5px !important;
+    display: flex; flex-direction: column; gap: 5px; margin-bottom: 5px !important;
   }
-  
   .fc-toolbar-chunk {
-    display: flex;
-    justify-content: space-between;
-    width: 100%; /* Розтягуємо на всю ширину */
-    align-items: center;
+    display: flex; justify-content: space-between; width: 100%; align-items: center;
   }
+  /* Переносимо заголовок (Дату) на самий верх */
+  .fc-toolbar-chunk:nth-child(2) { order: -1; justify-content: center; }
   
-  /* Перший рядок (Заголовок) */
-  .fc-toolbar-chunk:nth-child(2) {
-    order: -1; /* Піднімаємо заголовок на самий верх */
-    justify-content: center;
-    margin-bottom: 5px;
-  }
+  .fc-toolbar-title { font-size: 1.1rem !important; }
+  .fc-button { padding: 8px 14px !important; font-size: 0.9rem !important; }
 
-  .fc-toolbar-title {
-    font-size: 1.2rem !important; /* Трохи менший шрифт */
-  }
-
-  /* Кнопки навігації */
-  .fc-button {
-    padding: 8px 12px !important; /* Більші кнопки для пальців */
-    font-size: 0.9rem !important;
-  }
-
-  /* 3. Сітка календаря */
-  .fc-view-harness {
-    background: #fff;
-  }
-  
-  /* 4. Модальне вікно (Знизу екрану, як в iPhone) */
+  /* 3. Модальне вікно знизу (iPhone style) */
   .modal-content {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100% !important;
-    max-width: 100% !important;
-    border-radius: 20px 20px 0 0; /* Закруглення тільки зверху */
-    margin: 0;
-    max-height: 80vh; /* Не більше 80% екрану */
+    position: fixed; bottom: 0; left: 0;
+    width: 100%; max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 85vh; margin: 0;
     animation: slideUp 0.3s ease-out;
   }
-
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
-}
-
-/* Планшети (600px - 1024px) */
-@media (min-width: 601px) and (max-width: 1024px) {
-  .fc-toolbar-title { font-size: 16px !important; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-footer { padding-bottom: 30px; } /* Safe area */
 }
