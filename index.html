@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Liceum Manager v9.2</title>
+  <title>Liceum Manager v10.0</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="/favicon.jpg">
+  
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <script src="script.js" defer></script>
 </head>
 <body>
 
@@ -17,164 +18,138 @@
       <h2>Liceum EIT</h2>
       <input type="password" id="passInput" placeholder="Код доступу">
       <button class="btn btn-primary" onclick="tryLogin()">Увійти</button>
+      <p id="loginStatus" style="margin-top:10px; font-size:12px; color:#aaa;"></p>
     </div>
   </div>
 
   <div id="topBar" style="display: none;">
     <div class="brand">LICEUM MANAGER</div>
     <div class="user-controls">
-      <span id="roleBadge" class="badge"></span> 
-      <button class="btn-menu" id="mobileMenuBtn" onclick="toggleSidebar()">☰</button>
+      <button onclick="openSettings()" class="btn-icon">⚙️</button>
+      <span id="roleBadge" class="badge">Guest</span> 
       <button onclick="logout()" class="btn-logout">Вихід</button>
     </div>
   </div>
 
-  <div id="statusBar" style="display: none;"></div>
-
-  <div class="container" id="mainApp" style="display: none;">
-    
-    <div class="sidebar">
-      
-      <div class="sidebar-panel">
-        <details open>
-            <summary>❓ Інструкція</summary>
-            <div class="panel-content">
-                <div style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 10px; font-size: 13px;">
-                  <b>1. Створення:</b><br>
-                  Натисніть на час у календарі. Вкажіть предмет та клас.
-                </div>
-                <div style="background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 10px; font-size: 13px;">
-                  <b>2. Форс-мажор:</b><br>
-                  Натисніть на урок -> "Змінити статус" -> оберіть варіант.
-                </div>
-                <div style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 10px; font-size: 13px;">
-                  <b>3. Видалення:</b><br>
-                  Доступне <b>15 хвилин</b> після створення. Далі — тільки через Адміна.
-                </div>
-                <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; border-left: 4px solid #9ca3af; font-size: 13px;">
-                  <b>4. Технічна перерва:</b><br>
-                  Сірі блоки — студія зайнята адміністратором.
-                </div>
-            </div>
-        </details>
-      </div>
-
-      <div class="sidebar-panel" id="settingsBtn" style="display:none; margin-top: 10px;">
-  <button class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'" style="width:100%">⚙️ Налаштування</button>
-</div>
-
-      <div class="sidebar-panel" id="reportBtn" style="display:none; margin-top: 15px;">
-        <button class="btn btn-primary" onclick="openReport()" style="width:100%">📊 Звітність</button>
-      </div>
-
-      <div class="sidebar-panel" id="settingsBtn" style="display:none; margin-top: 10px;">
-        <button class="btn btn-secondary" onclick="openSettings()" style="width:100%">⚙️ Налаштування</button>
-      </div>
-    </div>
-
-    <div class="calendar-container">
-        <div id="calendar"></div>
-    </div>
+  <div id="mainContainer" style="display: none;">
+    <div id="calendar"></div>
   </div>
 
-  <div id="modalOverlay" class="overlay">
-    <div class="modal-content modern-modal">
-      <div class="modal-header"><h3>Новий запис</h3><button class="btn-logout" onclick="closeModal()">✕</button></div>
+  <div id="eventModalOverlay" class="overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Запланувати урок</h3>
+        <button onclick="closeModal('eventModalOverlay')">✕</button>
+      </div>
       <div class="modal-body">
+        
+        <div class="input-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="margin:0">Предмет</label>
+            <span onclick="toggleSubjectMode()" style="font-size: 11px; color: #4F46E5; cursor: pointer; text-decoration: underline;">
+              Свій варіант / Список
+            </span>
+          </div>
+          <select id="eventSubjectSelect" class="form-control">
+            <option value="Математика">Математика</option>
+            <option value="Укр. мова">Укр. мова</option>
+            <option value="Англійська">Англійська</option>
+            <option value="Історія">Історія</option>
+            <option value="Фізика">Фізика</option>
+            <option value="Хімія">Хімія</option>
+            <option value="Біологія">Біологія</option>
+            <option value="Інформатика">Інформатика</option>
+            <option value="Інше">Інше</option>
+          </select>
+          <input type="text" id="eventSubjectInput" class="form-control" placeholder="Введіть назву" style="display: none;">
+        </div>
+
+        <div class="input-group">
+          <label>Клас / Учень</label>
+          <input type="text" id="eventClass" class="form-control" placeholder="Напр: 10-А">
+        </div>
+        <div class="input-group">
+          <label>Коментар (тема)</label>
+          <input type="text" id="eventTitle" class="form-control" placeholder="Додатково...">
+        </div>
+
         <div class="input-grid">
-            <div class="input-group"><label>Початок</label><input type="time" id="startTime"></div>
-            <div class="input-group"><label>Кінець</label><input type="time" id="endTime"></div>
-        </div>
-        <div id="techBlockOption" style="display:none; background:#fee2e2; padding:10px; border-radius:8px; margin-bottom:15px;">
-            <label style="display: flex; align-items: center; gap: 8px; font-weight: bold; cursor: pointer; color: #ef4444;">
-                <input type="checkbox" id="isTechBreak" onchange="toggleTechBreak(this.checked)"> ⛔ Технічна перерва
-            </label>
-        </div>
-        <div id="bookingFields">
-            <div class="input-group">
-                <label>Предмет</label>
-                <input type="text" id="eventSubject" list="subjectsList" placeholder="Оберіть предмет...">
-                <datalist id="subjectsList">
-                    <option value="Математика"></option>
-                    <option value="Українська мова"></option>
-                    <option value="Англійська мова"></option>
-                    <option value="Історія України"></option>
-                </datalist>
-            </div>
-            <div class="input-grid">
-                <div class="input-group"><label>Клас</label><input type="text" id="eventClass" placeholder="11-А"></div>
-                <div class="input-group"><label>Вчитель</label><select id="eventTeacher"></select></div>
-            </div>
-            <div class="input-grid">
-                <div class="input-group"><label>К-сть уроків</label><input type="number" id="eventCount" value="1"></div>
-                <div class="input-group"><label>Колір</label><select id="eventColor">
-                    <option value="#4F46E5">🔵 Стандарт</option>
-                    <option value="#F59E0B">🟠 Важливо</option>
-                    <option value="#EC4899">🌸 Додатковий</option>
-                </select></div>
-            </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Скасувати</button>
-        <button class="btn btn-primary" onclick="confirmBooking()">Зберегти</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="statusModalOverlay" class="overlay">
-    <div class="modal-content modern-modal">
-        <div class="modal-header"><h3>Керування</h3><button class="btn-logout" onclick="closeStatusModal()">✕</button></div>
-        <div class="modal-body">
-            <h4 id="statusEventTitle"></h4>
-            <label>Змінити статус:</label>
-            <select id="eventStatus" style="width:100%; padding:10px; margin-top:10px;">
-                <option value="">🟢 Все за планом</option>
-                <option value="✅ Проведено">✅ Проведено</option>
-                <option value="🏃 Запізнююсь (10 хв)">🏃 Запізнююсь (10 хв)</option>
-                <option value="❌ Скасовано">❌ Скасовано</option>
+          <div class="input-group">
+            <label>Тривалість</label>
+            <select id="eventDuration" class="form-control">
+              <option value="45">45 хв</option>
+              <option value="60" selected>60 хв</option>
+              <option value="90">90 хв</option>
+              <option value="120">120 хв</option>
             </select>
+          </div>
+          <div class="input-group">
+            <label>Тип</label>
+            <select id="eventType" class="form-control">
+              <option value="lesson">Урок</option>
+              <option value="tech">Тех. перерва</option>
+            </select>
+          </div>
         </div>
-        <div class="modal-footer">
-            <button class="btn btn-primary" onclick="applyStatus()">Оновити</button>
-            <button id="btnDeleteEvent" class="btn btn-danger" onclick="handleDelete()">Видалити</button>
-        </div>
-    </div>
-  </div>
 
-  <div id="reportOverlay" class="overlay">
-    <div class="modal-content" style="max-width:800px; width:95%;">
-      <div class="modal-header"><h3>📊 Звітність</h3><button class="btn-logout" onclick="closeReport()">✕</button></div>
-      <div id="reportPrintArea" style="padding:20px; max-height:60vh; overflow-y:auto;">
-        <table class="report-table" style="width:100%; border-collapse:collapse;">
-          <thead><tr style="background:#f3f4f6;"><th>Вчитель</th><th>Дата</th><th>Предмет</th><th>Клас</th><th>Уроків</th><th>Підпис</th></tr></thead>
-          <tbody id="reportTableBody"></tbody>
-        </table>
+        <div id="editActions" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+           <label>Змінити статус:</label>
+           <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px;">
+             <button class="btn-status" onclick="updateStatus('✅ Проведено')">✅ Проведено</button>
+             <button class="btn-status" onclick="updateStatus('❌ Скасовано')">❌ Скасовано</button>
+             <button class="btn-status" onclick="updateStatus('🏃 Запізнення')">🏃 Запізнення</button>
+           </div>
+           <button class="btn-danger" onclick="deleteEvent()" style="width:100%">🗑 Видалити урок</button>
+        </div>
+
       </div>
       <div class="modal-footer">
-        <button class="btn btn-primary" onclick="window.print()">🖨 Друкувати</button>
+        <button id="saveBtn" class="btn btn-primary" style="width: 100%" onclick="saveEvent()">Зберегти</button>
       </div>
     </div>
   </div>
 
   <div id="settingsModal" class="overlay">
-    <div class="modal-content modern-modal">
-    <div class="modal-header"><h3>⚙️ Налаштування</h3><button class="btn-logout" onclick="document.getElementById('settingsModal').style.display='none'">✕</button></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Налаштування</h3>
+        <button onclick="closeModal('settingsModal')">✕</button>
+      </div>
       <div class="modal-body">
-        <h4>Telegram</h4>
-        <input type="text" id="tgToken" placeholder="Bot Token" style="width:100%; margin-bottom:10px;">
-        <input type="text" id="tgChatId" placeholder="Chat ID" style="width:100%;">
-        <button class="btn btn-primary" onclick="saveSettings()" style="width:100%; margin-top:10px;">Зберегти TG</button>
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        <h4>Коди доступу</h4>
-        <select id="passRoleSelector" style="width:100%; margin-bottom:10px;">
-            <option value="teacher">Викладач</option><option value="admin">Адмін</option><option value="tech">Технік</option>
-        </select>
-        <input type="text" id="newPassCode" placeholder="Новий код" style="width:100%;">
-        <button class="btn btn-danger" onclick="updatePassInDB()" style="width:100%; margin-top:10px;">Змінити код</button>
+        <h4>📢 Telegram Сповіщення</h4>
+        <p style="font-size:11px; color:#666; margin-bottom:10px;">Введіть дані вашого бота, щоб отримувати сповіщення про нові уроки.</p>
+        
+        <div class="input-group">
+          <label>Bot Token</label>
+          <input type="text" id="tgTokenInput" class="form-control" placeholder="123456:ABC-DEF...">
+        </div>
+        <div class="input-group">
+          <label>Chat ID (або Channel ID)</label>
+          <input type="text" id="tgChatIdInput" class="form-control" placeholder="-10012345678">
+        </div>
+
+        <hr>
+        <h4>🔑 Зміна паролів</h4>
+        <div class="input-group">
+            <label>Роль</label>
+            <select id="roleSelect" class="form-control">
+                <option value="teacher">Вчитель</option>
+                <option value="admin">Адмін</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Новий код доступу</label>
+            <input type="text" id="newPassInput" class="form-control" placeholder="Новий код">
+        </div>
+        <button class="btn btn-secondary" onclick="updateUserPass()" style="width:100%">Оновити пароль</button>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" style="width: 100%" onclick="saveSettings()">Зберегти налаштування</button>
       </div>
     </div>
   </div>
 
+  <script src="script.js"></script>
 </body>
 </html>
