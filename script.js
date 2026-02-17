@@ -1,20 +1,27 @@
 // ==========================================
-// 1. КОНФІГУРАЦІЯ (ЗАМІНИ НА СВОЇ ДАНІ!)
+// 1. КОНФІГУРАЦІЯ (ПЕРЕВІР СВОЇ ДАНІ!)
 // ==========================================
 const firebaseConfig = {
-   apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
-  authDomain: "liceum-eit-manager.firebaseapp.com",
-  databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "liceum-eit-manager",
-  storageBucket: "liceum-eit-manager.firebasestorage.app",
-  messagingSenderId: "854455059262",
-  appId: "1:854455059262:web:e6282bed63182559c5a26f",
-  measurementId: "G-NKS31DZ3MK"
+    apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM", // <-- ТУТ МАЮТЬ БУТИ ТВОЇ ДАНІ
+    authDomain: "liceum-eit-manager.firebaseapp.com",
+    databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "liceum-eit-manager",
+    storageBucket: "liceum-eit-manager.firebasestorage.app",
+    messagingSenderId: "854455059262",
+    appId: "1:854455059262:web:e6282bed63182559c5a26f",
+    measurementId: "G-NKS31DZ3MK"
 };
 
-firebase.initializeApp(firebaseConfig);
+// Ініціалізація
+try {
+    firebase.initializeApp(firebaseConfig);
+    console.log("Firebase initialized");
+} catch (e) {
+    alert("Помилка ініціалізації Firebase: " + e.message);
+}
 const db = firebase.database();
 
+// Глобальні змінні
 let currentUser = null;
 let calendar = null;
 let selectedSlot = null;
@@ -25,6 +32,8 @@ let appSettings = { tgToken: "", tgChatId: "" };
 // ==========================================
 // 2. ВХІД І ПРАВА
 // ==========================================
+
+// Завантаження налаштувань
 db.ref('settings').on('value', (snapshot) => {
     const val = snapshot.val();
     if(val) appSettings = val;
@@ -34,14 +43,19 @@ window.tryLogin = () => {
     const pass = document.getElementById('passInput').value.trim();
     const statusEl = document.getElementById('loginStatus');
     
-    if(!pass) return;
-    statusEl.innerText = "Перевірка...";
+    if(!pass) {
+        statusEl.innerText = "⚠️ Введіть код!";
+        return;
+    }
+    statusEl.innerText = "🔄 Підключення...";
 
-    db.ref('users').once('value').then(snapshot => {
+    db.ref('users').once('value')
+    .then(snapshot => {
         let users = snapshot.val();
         
-        // Авто-створення ролей, якщо база пуста
+        // --- АВТОМАТИЧНЕ СТВОРЕННЯ КОРИСТУВАЧІВ (ЯКЩО БАЗА ПУСТА) ---
         if (!users) {
+            console.log("База користувачів пуста. Створюємо стандартних...");
             users = {
                 "777": { role: "tech", name: "Технік" },
                 "888": { role: "admin", name: "Адміністратор" },
@@ -50,12 +64,19 @@ window.tryLogin = () => {
             db.ref('users').set(users);
         }
 
-        if (users[pass]) {
+        // --- ПЕРЕВІРКА КОДУ ---
+        if (users && users[pass]) {
             currentUser = { ...users[pass], id: pass };
             loginSuccess();
         } else {
-            statusEl.innerText = "❌ Невірний код";
+            statusEl.innerText = "❌ Код не знайдено";
+            console.log("Доступні коди:", Object.keys(users)); // Для налагодження (в консолі)
         }
+    })
+    .catch(error => {
+        console.error(error);
+        statusEl.innerText = "❌ Помилка з'єднання: " + error.message;
+        alert("Перевірте інтернет або Правила (Rules) у Firebase Console!");
     });
 };
 
@@ -69,17 +90,14 @@ function loginSuccess() {
     const settingsBtn = document.getElementById('settingsBtn');
     const reportBtn = document.getElementById('reportBtn');
 
-    // ЛОГІКА КНОПОК
+    // Логіка відображення кнопок
     if (currentUser.role === 'tech') {
-        // Технік бачить все
         settingsBtn.style.display = 'block';
         if(reportBtn) reportBtn.style.display = 'block';
     } else if (currentUser.role === 'admin') {
-        // Адмін не бачить налаштувань
         settingsBtn.style.display = 'none';
         if(reportBtn) reportBtn.style.display = 'block';
     } else {
-        // Вчитель
         settingsBtn.style.display = 'none';
         if(reportBtn) reportBtn.style.display = 'none';
     }
@@ -90,7 +108,7 @@ function loginSuccess() {
 window.logout = () => location.reload();
 
 // ==========================================
-// 3. НАЛАШТУВАННЯ (ВИПРАВЛЕНО)
+// 3. НАЛАШТУВАННЯ (ТЕХНІК)
 // ==========================================
 window.openSettings = () => {
     document.getElementById('tgTokenInput').value = appSettings.tgToken || "";
@@ -106,42 +124,40 @@ window.saveSettings = () => {
     closeModal('settingsModal');
 };
 
-// --- ГОЛОВНЕ ВИПРАВЛЕННЯ: ЗМІНА ПАРОЛІВ ---
+// ЗМІНА ПАРОЛІВ
 window.updateUserPass = () => {
     const targetRole = document.getElementById('roleSelect').value;
     const newCode = document.getElementById('newPassInput').value.trim();
 
     if(newCode.length < 3) return alert("Код має бути мінімум 3 символи!");
 
-    // 1. Отримуємо всіх користувачів
     db.ref('users').once('value').then(snapshot => {
         const users = snapshot.val() || {};
         const updates = {};
         let oldKey = null;
 
-        // 2. Шукаємо старий код для цієї ролі і видаляємо його
+        // Видаляємо старий код цієї ролі
         for (const [key, user] of Object.entries(users)) {
             if (user.role === targetRole) {
-                updates[key] = null; // null означає видалення
+                updates[key] = null;
                 oldKey = key;
             }
         }
 
-        // 3. Перевіряємо, чи не зайнятий новий код іншою роллю
+        // Перевірка на унікальність
         if (users[newCode] && users[newCode].role !== targetRole) {
-            return alert(`Цей код (${newCode}) вже зайнятий іншою роллю!`);
+            return alert(`Цей код (${newCode}) вже зайнятий!`);
         }
 
-        // 4. Додаємо новий код
         const roleNames = { "teacher": "Викладач", "admin": "Адміністратор", "tech": "Технік" };
+        
         updates[newCode] = {
             role: targetRole,
             name: roleNames[targetRole]
         };
 
-        // 5. Відправляємо оновлення в базу одним пакетом
         db.ref('users').update(updates).then(() => {
-            alert(`✅ Успішно! Пароль для ролі "${roleNames[targetRole]}" змінено з "${oldKey || '...'}" на "${newCode}"`);
+            alert(`✅ Пароль для "${roleNames[targetRole]}" змінено на "${newCode}"`);
             document.getElementById('newPassInput').value = "";
         }).catch(err => alert("Помилка: " + err));
     });
@@ -180,14 +196,21 @@ function initCalendar() {
             clickedEventId = info.event.id;
             const props = info.event.extendedProps;
             
-            document.getElementById('eventSubjectSelect').value = props.subject || "Інше";
-            if(!['Математика','Укр. мова','Англійська','Історія','Фізика','Хімія','Біологія','Інформатика','Початкова школа'].includes(props.subject)){
+            // Заповнення полів
+            const defaultSubjects = ['Математика','Укр. мова','Англійська','Історія','Фізика','Хімія','Біологія','Інформатика','Початкова школа'];
+            
+            if(!defaultSubjects.includes(props.subject)) {
                  isCustomSubject = true;
-                 toggleSubjectMode();
+                 // Примусово показуємо input
+                 document.getElementById('eventSubjectSelect').style.display = 'none';
+                 document.getElementById('eventSubjectInput').style.display = 'block';
                  document.getElementById('eventSubjectInput').value = props.subject;
             } else {
                  isCustomSubject = false;
-                 toggleSubjectMode();
+                 // Примусово показуємо select
+                 document.getElementById('eventSubjectSelect').style.display = 'block';
+                 document.getElementById('eventSubjectInput').style.display = 'none';
+                 document.getElementById('eventSubjectSelect').value = props.subject;
             }
 
             document.getElementById('eventClass').value = props.sClass;
@@ -203,16 +226,18 @@ function initCalendar() {
             db.ref('events').on('value', snap => {
                 const data = snap.val();
                 const events = [];
-                for(let id in data) {
-                    events.push({
-                        id: id,
-                        title: `${data[id].subject} (${data[id].sClass})`,
-                        start: data[id].start,
-                        end: data[id].end,
-                        backgroundColor: getColor(data[id].subject, data[id].status),
-                        borderColor: getColor(data[id].subject, data[id].status),
-                        extendedProps: data[id]
-                    });
+                if(data) {
+                    for(let id in data) {
+                        events.push({
+                            id: id,
+                            title: `${data[id].subject} (${data[id].sClass})`,
+                            start: data[id].start,
+                            end: data[id].end,
+                            backgroundColor: getColor(data[id].subject, data[id].status),
+                            borderColor: getColor(data[id].subject, data[id].status),
+                            extendedProps: data[id]
+                        });
+                    }
                 }
                 successCallback(events);
             });
@@ -235,8 +260,7 @@ function initCalendar() {
 function getColor(subject, status) {
     if (status && status.includes("Скасовано")) return '#9CA3AF';
     if (status && status.includes("Проведено")) return '#10B981';
-    
-    if(subject === 'tech') return '#374151';
+    if (subject === 'tech') return '#374151';
 
     const colors = {
         'Математика': '#EF4444', 'Укр. мова': '#F59E0B',
@@ -259,7 +283,7 @@ function updateEventTime(event) {
 }
 
 // ==========================================
-// 5. МОДАЛКИ ТА ФУНКЦІОНАЛ
+// 5. МОДАЛКИ
 // ==========================================
 window.openModal = (id, title, isEdit = false) => {
     document.getElementById(id).style.display = 'flex';
@@ -275,8 +299,13 @@ window.openModal = (id, title, isEdit = false) => {
         } else {
             actions.style.display = 'none';
             saveBtn.innerText = "Створити";
+            // Очистка
             document.getElementById('eventClass').value = "";
             document.getElementById('eventTitle').value = "";
+            // Скидання на дефолтний предмет
+            document.getElementById('eventSubjectSelect').style.display = 'block';
+            document.getElementById('eventSubjectInput').style.display = 'none';
+            isCustomSubject = false;
         }
     }
 };
@@ -284,27 +313,22 @@ window.openModal = (id, title, isEdit = false) => {
 window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
 window.toggleSubjectMode = () => {
-    isCustomSubject = !isCustomSubject; // Змінюємо стан перемикача
+    isCustomSubject = !isCustomSubject;
     const sel = document.getElementById('eventSubjectSelect');
     const inp = document.getElementById('eventSubjectInput');
     
-    // Якщо примусово false (наприклад, при відкритті відомого предмета) або перемикач вимкнено
-    // Тут спрощена логіка: функція просто перемикає відображення
-    if(sel.style.display === 'none') {
-        sel.style.display = 'block';
-        inp.style.display = 'none';
-        isCustomSubject = false;
-    } else {
+    if(isCustomSubject) {
         sel.style.display = 'none';
         inp.style.display = 'block';
         inp.focus();
-        isCustomSubject = true;
+    } else {
+        sel.style.display = 'block';
+        inp.style.display = 'none';
     }
 };
 
 window.saveEvent = () => {
     const sel = document.getElementById('eventSubjectSelect');
-    // Визначаємо subject залежно від того, яке поле видиме
     const subject = (sel.style.display === 'none') 
         ? document.getElementById('eventSubjectInput').value 
         : sel.value;
@@ -371,5 +395,5 @@ window.updateStatus = (st) => {
 };
 
 window.openReport = () => {
-    alert("Звіти будуть тут (можна скопіювати з попередньої версії)");
+    alert("Модуль звітності");
 };
