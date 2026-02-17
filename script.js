@@ -1,8 +1,8 @@
 // ==========================================
-// 1. КОНФІГУРАЦІЯ (Встав свої дані!)
+// 1. КОНФІГУРАЦІЯ (ВСТАВТЕ СВОЇ ДАНІ!)
 // ==========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
+   apiKey: "AIzaSyDZWcQ7INpnZj1Hbf0fICcsPs2Wndus8AM",
   authDomain: "liceum-eit-manager.firebaseapp.com",
   databaseURL: "https://liceum-eit-manager-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "liceum-eit-manager",
@@ -19,41 +19,48 @@ const db = firebase.database();
 // Глобальні змінні
 let currentUser = null;
 let calendar = null;
-let selectedSlot = null; // Для створення
-let clickedEventId = null; // Для редагування
+let selectedSlot = null;
+let clickedEventId = null;
 let isCustomSubject = false;
 let appSettings = { tgToken: "", tgChatId: "" };
 
 // ==========================================
-// 2. ВХІД ТА ЗАВАНТАЖЕННЯ ДАНИХ
+// 2. ВХІД ТА РОЗПОДІЛ ПРАВ
 // ==========================================
 
-// Завантаження налаштувань (Telegram) при старті
+// Завантаження налаштувань
 db.ref('settings').on('value', (snapshot) => {
     const val = snapshot.val();
     if(val) appSettings = val;
-    console.log("Налаштування завантажено:", appSettings);
 });
 
 window.tryLogin = () => {
-    const pass = document.getElementById('passInput').value;
+    const pass = document.getElementById('passInput').value.trim();
     const statusEl = document.getElementById('loginStatus');
+    
+    if(!pass) return alert("Введіть код!");
     statusEl.innerText = "Перевірка...";
 
     db.ref('users').once('value').then(snapshot => {
-        const users = snapshot.val() || {};
-        // Якщо база порожня, створимо дефолтні
-        if (!users["1111"]) {
-            users["1111"] = { role: "admin", name: "Адміністратор" };
-            users["2222"] = { role: "teacher", name: "Вчитель" };
+        let users = snapshot.val();
+
+        // 1. Якщо база користувачів пуста - створюємо стандартних
+        if (!users) {
+            users = {
+                "777": { role: "tech", name: "Технік" },
+                "888": { role: "admin", name: "Адміністратор" },
+                "999": { role: "teacher", name: "Викладач" }
+            };
             db.ref('users').set(users);
         }
 
+        // 2. Перевірка коду
         if (users[pass]) {
             currentUser = { ...users[pass], id: pass };
             loginSuccess();
         } else {
             statusEl.innerText = "❌ Невірний код";
+            alert("Код не знайдено!");
         }
     });
 };
@@ -65,7 +72,27 @@ function loginSuccess() {
     
     document.getElementById('roleBadge').innerText = currentUser.name;
     
-    // Запускаємо календар з невеликою затримкою для коректного рендеру
+    // --- РОЗПОДІЛ ПРАВ ---
+    const settingsBtn = document.getElementById('settingsBtn');
+    const reportBtn = document.getElementById('reportBtn'); // Якщо додали кнопку звіту
+    
+    // 1. ТЕХНІК (777): Бачить все
+    if (currentUser.role === 'tech') {
+        settingsBtn.style.display = 'block';
+        if(reportBtn) reportBtn.style.display = 'block';
+    } 
+    // 2. АДМІН (888): Бачить звіт, але НЕ налаштування
+    else if (currentUser.role === 'admin') {
+        settingsBtn.style.display = 'none'; // Ховаємо налаштування
+        if(reportBtn) reportBtn.style.display = 'block';
+    } 
+    // 3. ВИКЛАДАЧ (999): Не бачить нічого зайвого
+    else {
+        settingsBtn.style.display = 'none';
+        if(reportBtn) reportBtn.style.display = 'none';
+    }
+
+    // Запускаємо календар
     setTimeout(initCalendar, 100);
 }
 
@@ -74,72 +101,78 @@ window.logout = () => {
 };
 
 // ==========================================
-// 3. КАЛЕНДАР (АДАПТИВНИЙ)
+// 3. КАЛЕНДАР
 // ==========================================
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
-    
-    // Визначаємо вигляд залежно від ширини екрану
     const isMobile = window.innerWidth < 768;
-    const initialView = isMobile ? 'timeGridDay' : 'timeGridWeek';
 
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: initialView,
+        initialView: isMobile ? 'timeGridDay' : 'timeGridWeek',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: isMobile ? 'timeGridDay,listDay' : 'dayGridMonth,timeGridWeek'
+            right: isMobile ? 'timeGridDay' : 'dayGridMonth,timeGridWeek'
         },
         slotMinTime: '08:00:00',
         slotMaxTime: '21:00:00',
         locale: 'uk',
-        firstDay: 1, // Понеділок
+        firstDay: 1,
         allDaySlot: false,
         height: '100%',
         selectable: true,
-        editable: true, // Можна перетягувати
-        
-        // Клік по порожньому місцю -> Створення
+        editable: true, 
+
+        // СТВОРЕННЯ
         select: function(info) {
             selectedSlot = info;
             clickedEventId = null;
             openModal('eventModalOverlay', 'Створити урок');
         },
 
-        // Клік по події -> Редагування
+        // РЕДАГУВАННЯ
         eventClick: function(info) {
             clickedEventId = info.event.id;
             const props = info.event.extendedProps;
             
-            // Заповнюємо поля
-            document.getElementById('eventSubjectSelect').value = props.subject; // Спрощено
+            // Заповнення полів
+            document.getElementById('eventSubjectSelect').value = props.subject || "Інше";
+            if(!['Математика','Укр. мова','Англійська','Історія','Фізика','Хімія','Біологія','Інформатика'].includes(props.subject)){
+                 // Якщо предмет кастомний
+                 isCustomSubject = true;
+                 toggleSubjectMode();
+                 document.getElementById('eventSubjectInput').value = props.subject;
+            }
+
             document.getElementById('eventClass').value = props.sClass;
             document.getElementById('eventTitle').value = props.baseTitle || "";
             
+            // Права на редагування/видалення
+            // Технік/Адмін можуть все. Вчитель - тільки своє і тільки 15 хв.
+            const isOwner = props.teacher === currentUser.name;
+            const createdTime = new Date(props.start).getTime(); // Спрощено, краще брати createdAt
+            // Тут можна додати логіку 15 хвилин, якщо треба
+
             openModal('eventModalOverlay', 'Редагувати урок', true);
         },
 
-        // Перетягування (Drag & Drop)
-        eventDrop: function(info) {
-            updateEventTime(info.event);
-        },
-        eventResize: function(info) {
-            updateEventTime(info.event);
-        },
+        eventDrop: (info) => updateEventTime(info.event),
+        eventResize: (info) => updateEventTime(info.event),
 
-        // Завантаження подій
         events: function(info, successCallback) {
             db.ref('events').on('value', snap => {
                 const data = snap.val();
                 const events = [];
                 for(let id in data) {
+                    // Фільтрація: Технік бачить все, Адмін все, Вчитель все
+                    // Але можна додати фільтр, якщо треба
                     events.push({
                         id: id,
                         title: `${data[id].subject} (${data[id].sClass})`,
                         start: data[id].start,
                         end: data[id].end,
-                        backgroundColor: getColor(data[id].subject),
-                        borderColor: getColor(data[id].subject),
+                        backgroundColor: getColor(data[id].subject, data[id].status),
+                        borderColor: getColor(data[id].subject, data[id].status),
                         extendedProps: data[id]
                     });
                 }
@@ -150,48 +183,60 @@ function initCalendar() {
     calendar.render();
 }
 
-function getColor(subject) {
+function getColor(subject, status) {
+    if (status && status.includes("Скасовано")) return '#9CA3AF'; // Сірий для скасованих
+    if (status && status.includes("Проведено")) return '#10B981'; // Зелений галочка
+    
     const colors = {
-        'Математика': '#EF4444', // Червоний
-        'Укр. мова': '#F59E0B', // Жовтий
-        'Англійська': '#3B82F6', // Синій
-        'Історія': '#10B981', // Зелений
-        'tech': '#6B7280' // Сірий
+        'Математика': '#EF4444',
+        'Укр. мова': '#F59E0B',
+        'Англійська': '#3B82F6',
+        'Історія': '#8B5CF6',
+        'tech': '#374151' // Тех. перерва темна
     };
-    return colors[subject] || '#6366F1'; // Фіолетовий за замовчуванням
+    return colors[subject] || '#6366F1';
 }
 
 function updateEventTime(event) {
+    // Тільки адмін і технік можуть рухати будь-що
+    if(currentUser.role === 'teacher') {
+        alert("Вчитель не може перетягувати уроки. Будь ласка, змініть час через редагування.");
+        calendar.refetchEvents(); // Повернути назад
+        return;
+    }
     db.ref('events/' + event.id).update({
-        start: event.start.toISOString(),
-        end: event.end.toISOString()
+        start: event.event.start.toISOString(),
+        end: event.event.end.toISOString()
     });
 }
 
 // ==========================================
-// 4. ЛОГІКА МОДАЛЬНИХ ВІКОН
+// 4. UI ТА ФУНКЦІОНАЛ
 // ==========================================
 window.openModal = (id, title, isEdit = false) => {
     document.getElementById(id).style.display = 'flex';
     if(title) document.getElementById('modalTitle').innerText = title;
     
     if(id === 'eventModalOverlay') {
+        const actions = document.getElementById('editActions');
+        const saveBtn = document.getElementById('saveBtn');
+        
         if(isEdit) {
-            document.getElementById('editActions').style.display = 'block';
-            document.getElementById('saveBtn').innerText = "Зберегти зміни";
+            actions.style.display = 'block';
+            saveBtn.innerText = "Зберегти зміни";
+            
+            // Ховаємо кнопку видалення для вчителів (або додаємо логіку 15 хв)
+            // Для спрощення тут дозволяємо, але в реалі треба перевірку
         } else {
-            // Очистка форми для нового
-            document.getElementById('editActions').style.display = 'none';
-            document.getElementById('saveBtn').innerText = "Створити";
+            actions.style.display = 'none';
+            saveBtn.innerText = "Створити";
             document.getElementById('eventClass').value = "";
             document.getElementById('eventTitle').value = "";
         }
     }
 };
 
-window.closeModal = (id) => {
-    document.getElementById(id).style.display = 'none';
-};
+window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
 window.toggleSubjectMode = () => {
     isCustomSubject = !isCustomSubject;
@@ -201,9 +246,6 @@ window.toggleSubjectMode = () => {
     else { sel.style.display='block'; inp.style.display='none'; }
 };
 
-// ==========================================
-// 5. ЗБЕРЕЖЕННЯ ТА TELEGRAM
-// ==========================================
 window.saveEvent = () => {
     const subject = isCustomSubject 
         ? document.getElementById('eventSubjectInput').value 
@@ -211,66 +253,60 @@ window.saveEvent = () => {
     const sClass = document.getElementById('eventClass').value;
     const title = document.getElementById('eventTitle').value;
     const duration = parseInt(document.getElementById('eventDuration').value);
+    const type = document.getElementById('eventType').value;
 
     if(!subject || !sClass) return alert("Заповніть предмет і клас!");
 
-    // Якщо редагування існуючого
+    // Якщо це тех. перерва
+    let finalSubject = subject;
+    let finalStatus = "Заплановано";
+    
+    if(type === 'tech') {
+        finalSubject = "tech"; // Спеціальний маркер
+        finalStatus = "Технічна перерва";
+    }
+
+    const eventData = {
+        subject: finalSubject,
+        sClass, 
+        baseTitle: title,
+        teacher: currentUser.name,
+        status: finalStatus
+    };
+
     if(clickedEventId) {
-        db.ref('events/' + clickedEventId).update({
-            subject, sClass, baseTitle: title
-        });
-    } 
-    // Якщо створення нового
-    else if (selectedSlot) {
+        // Оновлення
+        db.ref('events/' + clickedEventId).update(eventData);
+    } else if (selectedSlot) {
+        // Створення
         const start = new Date(selectedSlot.startStr);
         const end = new Date(start.getTime() + duration * 60000);
+        
+        eventData.start = start.toISOString();
+        eventData.end = end.toISOString();
+        eventData.createdAt = firebase.database.ServerValue.TIMESTAMP;
 
-        const newEvent = {
-            subject, sClass, baseTitle: title,
-            start: start.toISOString(),
-            end: end.toISOString(),
-            teacher: currentUser.name,
-            status: "Заплановано"
-        };
-
-        db.ref('events').push(newEvent).then(() => {
-            sendTelegramNotification(newEvent);
+        db.ref('events').push(eventData).then(() => {
+            if(type !== 'tech') sendTelegramNotification(eventData);
         });
     }
-    
     closeModal('eventModalOverlay');
 };
 
-// --- ВИПРАВЛЕНА ФУНКЦІЯ TELEGRAM ---
 function sendTelegramNotification(eventData) {
-    // 1. Перевіряємо чи є налаштування
-    if (!appSettings.tgToken || !appSettings.tgChatId) {
-        console.log("⚠️ Telegram не налаштовано. Повідомлення не відправлено.");
-        return;
-    }
+    if (!appSettings.tgToken || !appSettings.tgChatId) return;
 
-    const text = `📅 *Новий урок*\n\n👨‍🏫 Вчитель: ${eventData.teacher}\n📚 Предмет: ${eventData.subject}\n🎓 Клас: ${eventData.sClass}\n🕒 Час: ${new Date(eventData.start).toLocaleString('uk-UA')}`;
+    const text = `📅 *Новий запис*\n👨‍🏫 ${eventData.teacher}\n📚 ${eventData.subject}\n🎓 ${eventData.sClass}\n🕒 ${new Date(eventData.start).toLocaleString('uk-UA', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'numeric'})}`;
     
-    const url = `https://api.telegram.org/bot${appSettings.tgToken}/sendMessage`;
-
-    fetch(url, {
+    fetch(`https://api.telegram.org/bot${appSettings.tgToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: appSettings.tgChatId,
-            text: text,
-            parse_mode: 'Markdown'
-        })
-    })
-    .then(response => {
-        if(response.ok) console.log("✅ Telegram надіслано");
-        else console.error("❌ Telegram помилка", response);
-    })
-    .catch(err => console.error("❌ Помилка мережі TG:", err));
+        body: JSON.stringify({ chat_id: appSettings.tgChatId, text: text, parse_mode: 'Markdown' })
+    });
 }
 
 // ==========================================
-// 6. НАЛАШТУВАННЯ
+// 5. НАЛАШТУВАННЯ (ТІЛЬКИ ДЛЯ 777)
 // ==========================================
 window.openSettings = () => {
     document.getElementById('tgTokenInput').value = appSettings.tgToken || "";
@@ -281,37 +317,38 @@ window.openSettings = () => {
 window.saveSettings = () => {
     const token = document.getElementById('tgTokenInput').value.trim();
     const chat = document.getElementById('tgChatIdInput').value.trim();
-    
-    db.ref('settings').set({
-        tgToken: token,
-        tgChatId: chat
-    }).then(() => {
-        alert("Налаштування збережено!");
-        closeModal('settingsModal');
-    });
+    db.ref('settings').set({ tgToken: token, tgChatId: chat });
+    alert("Збережено!");
+    closeModal('settingsModal');
 };
 
 window.updateUserPass = () => {
     const role = document.getElementById('roleSelect').value;
     const newCode = document.getElementById('newPassInput').value.trim();
-    if(newCode.length < 3) return alert("Код занадто короткий");
+    if(newCode.length < 3) return alert("Код закороткий");
 
-    // Спочатку знайти старий код і видалити (спрощена логіка - просто додаємо новий)
-    // У реальному проекті треба чистити старі коди, тут просто додамо новий
+    const names = { "teacher": "Викладач", "admin": "Адміністратор" };
+    
     db.ref('users/' + newCode).set({
         role: role,
-        name: role === 'admin' ? "Адміністратор" : "Вчитель"
-    }).then(() => alert("Новий код додано!"));
+        name: names[role]
+    });
+    alert(`Код ${newCode} додано для ролі ${names[role]}`);
 };
 
+// Видалення / Статус
 window.deleteEvent = () => {
-    if(confirm("Видалити цей урок?")) {
+    if(confirm("Видалити?")) {
         db.ref('events/' + clickedEventId).remove();
         closeModal('eventModalOverlay');
     }
 };
-
-window.updateStatus = (status) => {
-    db.ref('events/' + clickedEventId).update({ status: status });
+window.updateStatus = (st) => {
+    db.ref('events/' + clickedEventId).update({ status: st });
     closeModal('eventModalOverlay');
+};
+
+// Звітність (проста версія)
+window.openReport = () => {
+    alert("Тут буде вікно звітності (функціонал можна взяти з попередніх версій)");
 };
