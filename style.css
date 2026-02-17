@@ -1,35 +1,115 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-:root { --primary: #4F46E5; --danger: #EF4444; --bg: #F3F4F6; --text: #1F2937; }
-body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent; }
-#loginScreen { position: fixed; inset: 0; background: #111827; display: flex; align-items: center; justify-content: center; z-index: 5000; }
-.login-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 320px; text-align: center; }
-.login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-#topBar { position: fixed; top: 0; width: 100%; height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 2000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); box-sizing: border-box; }
-.brand { font-weight: 700; color: var(--primary); font-size: 18px; }
-.user-controls { display: flex; gap: 10px; align-items: center; }
-#mainContainer { padding: 70px 10px 10px 10px; height: 100vh; box-sizing: border-box; }
-#calendar { height: 100%; background: white; border-radius: 12px; padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-.modal-content { background: white; width: 95%; max-width: 450px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
-.modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+
+:root {
+  --admin-color: #4F46E5;
+  --teacher-color: #10B981;
+  --danger-color: #EF4444;
+  --bg-color: #F3F4F6;
+}
+
+body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-color); color: #1F2937; -webkit-tap-highlight-color: transparent; }
+
+/* Вхід */
+#loginScreen { position: fixed; inset: 0; background: #1F2937; display: flex; align-items: center; justify-content: center; z-index: 5000; }
+.login-box { background: white; padding: 40px; border-radius: 24px; width: 320px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+.login-box h2 { margin-top: 0; color: #111827; }
+.login-box input { width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 20px; border: 2px solid #E5E7EB; border-radius: 12px; font-size: 16px; text-align: center; }
+.login-box .btn { width: 100%; }
+
+/* Панель керування */
+#topBar { position: fixed; top: 0; width: 100%; height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 2000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); box-sizing: border-box;}
+.brand { font-weight: 800; font-size: 18px; color: #111827; letter-spacing: -0.5px; }
+.user-controls { display: flex; align-items: center; gap: 15px; }
+.badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
+.btn-logout { background: none; border: none; color: #6B7280; font-weight: 600; cursor: pointer; padding: 5px; }
+.btn-logout:hover { color: #111827; }
+
+/* StatusBar */
+#statusBar { position: fixed; top: 60px; width: 100%; height: 35px; background: #10B981; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; z-index: 1999; transition: background 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+/* Головний контейнер */
+.container { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 95px); margin-top: 95px; }
+
+/* Сайдбар */
+.sidebar { background: white; border-right: 1px solid #E5E7EB; padding: 20px; overflow-y: auto; }
+.sidebar h3 { font-size: 12px; text-transform: uppercase; color: #6B7280; margin-top: 0; margin-bottom: 12px; letter-spacing: 0.5px; }
+.filter-item { padding: 8px 16px; background: #F3F4F6; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+.filter-item:hover { background: #E5E7EB; }
+.filter-item.active { background: #EEF2FF; border-color: #4F46E5; color: #4F46E5; }
+
+/* Календар */
+.calendar-container { padding: 20px; background: white; height: 100%; box-sizing: border-box; }
+#calendar { height: 100%; }
+
+/* Елементи форм */
+input, select { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; font-family: inherit; }
+input:focus, select:focus { border-color: #4F46E5; }
+.btn { padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: transform 0.1s, opacity 0.2s; font-family: inherit; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: #4F46E5; color: white; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-danger { background: #EF4444; color: white; }
+.btn-secondary { background: #F3F4F6; color: #374151; }
+.btn-secondary:hover { background: #E5E7EB; }
+.btn-light { background: #E0E7FF; color: #4F46E5; width: 100%; margin-top: 10px; }
+
+/* Модалки */
+.overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.7); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(4px); }
+.modern-modal { width: 420px !important; padding: 0 !important; overflow: hidden; border-radius: 20px !important; border: 1px solid rgba(0,0,0,0.05); background: white;}
+.modal-header { padding: 20px 24px; background: #fcfcfd; border-bottom: 1px solid #f1f1f4; display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { margin: 0; font-size: 18px; }
-.modal-body { padding: 20px; overflow-y: auto; }
-.modal-footer { padding: 15px 20px; border-top: 1px solid #eee; background: #f9fafb; }
-.input-group { margin-bottom: 12px; }
-.input-group label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 4px; }
-.form-control { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.btn { border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: 0.2s; }
-.btn-primary { background: var(--primary); color: white; }
-.btn-secondary { background: #E5E7EB; color: #374151; }
-.btn-danger { background: #FEE2E2; color: var(--danger); border: 1px solid var(--danger); width: 100%; padding: 10px; border-radius: 8px; margin-top: 10px; cursor: pointer;}
-.btn-logout { background: #F3F4F6; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
-.btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; }
-.badge { background: #E0E7FF; color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-.btn-status { background: white; border: 1px solid #ddd; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; flex-grow: 1; }
-.btn-status:hover { background: #f9fafb; }
-.fc-event { border: none !important; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; }
-.fc-toolbar-title { font-size: 16px !important; }
-.fc-header-toolbar { margin-bottom: 10px !important; }
-.fc-button { font-size: 12px !important; padding: 4px 8px !important; }
-@media (max-width: 768px) { .fc-toolbar { flex-wrap: wrap; gap: 5px; } .modal-content { width: 100%; height: 100%; border-radius: 0; max-height: 100vh; } }
+.modal-body { padding: 20px 24px; background: white; }
+.modal-footer { padding: 16px 24px; background: #fcfcfd; border-top: 1px solid #f1f1f4; display: flex; gap: 12px; }
+
+.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+.input-group { margin-bottom: 15px; }
+.input-group label { font-size: 12px; font-weight: 700; color: #4b5563; margin-bottom: 6px; display: block; }
+.compact-color { width: 40px; height: 40px; border-radius: 10px; cursor: pointer; }
+
+details { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; margin-bottom: 10px; }
+summary { padding: 12px 16px; font-weight: 600; cursor: pointer; list-style: none; outline: none; }
+summary::-webkit-details-marker { display: none; }
+.panel-content { padding: 0 16px 16px 16px; border-top: 1px solid #E5E7EB; margin-top: 8px; padding-top: 12px; }
+
+/* Адаптивність */
+@media (max-width: 768px) {
+  .container { grid-template-columns: 1fr; position: relative; }
+  .sidebar { display: none; background: white; width: 100%; } /* Приховано за замовчуванням */
+  .modern-modal { width: 90% !important; }
+  #mobileMenuBtn { display: inline-block; } /* Показуємо кнопку меню */
+}
+
+@media (min-width: 769px) {
+    #mobileMenuBtn { display: none; } /* Ховаємо кнопку меню на ПК */
+    .sidebar { display: block !important; }
+}
+/* Стилі звіту */
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+}
+
+.report-table th, .report-table td {
+    border: 1px solid #E5E7EB;
+    padding: 12px;
+    font-size: 14px;
+    text-align: left;
+}
+
+.report-table th {
+    background: #F9FAFB;
+    font-weight: 700;
+    color: #374151;
+}
+
+.color-picker {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.color-picker:hover { transform: scale(1.1); }
