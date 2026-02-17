@@ -73,9 +73,15 @@ summary::-webkit-details-marker { display: none; }
 
 /* Адаптивність */
 @media (max-width: 768px) {
-  .container { grid-template-columns: 1fr; }
-  .sidebar { display: none; } /* Приховати на моб */
+  .container { grid-template-columns: 1fr; position: relative; }
+  .sidebar { display: none; background: white; width: 100%; } /* Приховано за замовчуванням */
   .modern-modal { width: 90% !important; }
+  #mobileMenuBtn { display: inline-block; } /* Показуємо кнопку меню */
+}
+
+@media (min-width: 769px) {
+    #mobileMenuBtn { display: none; } /* Ховаємо кнопку меню на ПК */
+    .sidebar { display: block !important; }
 }
 /* Стилі звіту */
 .report-table {
