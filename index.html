@@ -89,18 +89,27 @@
     </div>
   </div>
 
-  <div id="instructionModalOverlay" class="overlay" style="background: rgba(0,0,0,0.85);">
-    <div class="modal-content" style="max-width: 600px; padding: 30px; border-radius: 25px; border: 3px solid #10B981;">
-        <h2 style="color: #10B981; margin-top:0;">📖 Як користуватися системою</h2>
-        <div style="text-align: left; font-size: 16px; line-height: 1.6; color: #1F2937;">
-            <p>1️⃣ <b>Створення:</b> Виберіть час у календарі. Ви можете <b>вручну скоригувати час</b> та вказати <b>кількість уроків</b> (наприклад, 2, якщо це пара).</p>
-            <p>2️⃣ <b>Статуси:</b> Якщо ви запізнюєтесь або урок скасовано — натисніть на свій запис і змініть статус. Бот одразу сповістить про це групу.</p>
-            <p>3️⃣ <b>Видалення:</b> Викладач може видалити помилковий запис лише протягом <b>15 хвилин</b>. Після цього — тільки через адміна.</p>
-            <p>4️⃣ <b>Звітність:</b> Усі проведені уроки автоматично потрапляють у таблицю звіту для друку.</p>
-        </div>
-        <button class="btn btn-success" style="width:100%; font-size: 18px; margin-top: 20px;" onclick="document.getElementById('instructionModalOverlay').style.display='none'">ЗРОЗУМІЛО</button>
-    </div>
-  </div>
+  <div class="panel-content">
+    <p style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 10px; font-size: 13px; margin-top:0;">
+      <b>1. Створення:</b><br>
+      Натисніть на час у календарі. Введіть предмет та клас.
+    </p>
+
+    <p style="background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 10px; font-size: 13px;">
+      <b>2. Статус (Форс-мажор):</b><br>
+      Натисніть на свій урок -> змініть статус (наприклад "Запізнююсь").
+    </p>
+
+    <p style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 10px; font-size: 13px;">
+      <b>3. Видалення:</b><br>
+      Доступне тільки протягом <b>15 хвилин</b> після створення. Далі — тільки через Адміна.
+    </p>
+
+    <p style="background: #f3f4f6; padding: 12px; border-radius: 8px; border-left: 4px solid #9ca3af; margin-bottom: 0; font-size: 13px;">
+      <b>4. Технічна перерва:</b><br>
+      Сірі блоки — студія зайнята адміністратором.
+    </p>
+</div>
 
   <div id="statusModalOverlay" class="overlay">
     <div class="modal-content modern-modal">
