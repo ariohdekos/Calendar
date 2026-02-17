@@ -30,8 +30,13 @@ let clickedEvent = null;
 // ==========================================
 
 // Завантаження актуальних кодів доступу з бази
+// Оновлення списку користувачів та АВТО-ВХІД
 db.ref('users').on('value', snap => {
-    if (snap.val()) USERS = snap.val();
+    if (snap.val()) {
+        USERS = snap.val();
+    }
+    // Перевірка авто-входу відразу після завантаження бази
+    checkAutoLogin();
 });
 
 window.tryLogin = () => {
@@ -331,14 +336,20 @@ window.openReport = () => {
 };
 window.closeReport = () => document.getElementById('reportOverlay').style.display = 'none';
 
-// Авто-вхід
-if (sessionStorage.getItem('st_token')) {
-    const t = sessionStorage.getItem('st_token');
-    // Невеликий таймер, щоб Firebase встиг завантажити актуальні USERS
-    setTimeout(() => {
-        if (USERS[t]) {
-            currentUser = USERS[t];
-            startApp();
-        }
-    }, 1000);
+// === ФУНКЦІЯ ПЕРЕВІРКИ АВТО-ВХОДУ ===
+function checkAutoLogin() {
+    // Якщо користувач вже авторизований - нічого не робимо
+    if (currentUser) return;
+
+    const token = sessionStorage.getItem('st_token');
+    
+    // Якщо токен є і він підходить до списку USERS
+    if (token && USERS[token]) {
+        console.log("Відновлення сесії для:", USERS[token].role);
+        currentUser = USERS[token];
+        startApp();
+    }
 }
+
+// Перша спроба входу (для стандартних паролів 777/888/999)
+checkAutoLogin();
