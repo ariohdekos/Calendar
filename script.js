@@ -78,39 +78,128 @@ function startApp() {
 
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
+    const width = window.innerWidth;
+
+    // Визначаємо вигляд залежно від пристрою
+    let initialView = 'timeGridWeek';
+    let headerRight = 'dayGridMonth,timeGridWeek';
+    let slotDuration = '00:30:00'; // Крок 30 хв
+
+    if (width < 768) {
+        // МОБІЛЬНИЙ
+        initialView = 'timeGridDay'; 
+        headerRight = 'today'; // Мінімум кнопок
+        slotDuration = '01:00:00'; // Крупніші слоти
+    } else if (width >= 768 && width < 1100) {
+        // ПЛАНШЕТ (Кастомний вид на 3 дні)
+        initialView = 'timeGridThreeDay';
+        headerRight = 'timeGridThreeDay,timeGridWeek';
+    }
+
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek',
-        locale: 'uk',
-        firstDay: 1,
+        // Додаємо кастомний вид для планшета
+        views: {
+            timeGridThreeDay: {
+                type: 'timeGrid',
+                duration: { days: 3 },
+                buttonText: '3 дні'
+            }
+        },
+        initialView: initialView,
+        headerToolbar: {
+            left: 'prev,next', // Кнопки навігації зліва
+            center: 'title',   // Заголовок по центру
+            right: headerRight // Перемикачі справа
+        },
         slotMinTime: '08:00:00',
         slotMaxTime: '21:00:00',
+        slotDuration: slotDuration,
         allDaySlot: false,
-        height: 'auto',
+        locale: 'uk',
+        firstDay: 1, // Понеділок
+        height: '100%', // На весь контейнер
+        expandRows: true, // Розтягувати рядки
+        stickyHeaderDates: true, // Заголовки днів "прилипають" при скролі
+        
         selectable: true,
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'timeGridWeek,timeGridDay'
-        },
-        select: (info) => {
+        editable: true,
+        longPressDelay: 0, // Миттєва реакція на тач
+
+        // --- ОБРОБНИКИ ПОДІЙ ---
+        select: function(info) {
             selectedSlot = info;
-            document.getElementById('startTime').value = info.startStr.split('T')[1].substring(0,5);
-            document.getElementById('endTime').value = info.endStr.split('T')[1].substring(0,5);
-            document.getElementById('modalOverlay').style.display = 'flex';
+            clickedEventId = null;
+            openModal('eventModalOverlay', 'Створити урок');
         },
-        eventClick: (info) => {
-            clickedEvent = info.event;
+
+        eventClick: function(info) {
+            clickedEventId = info.event.id;
             const props = info.event.extendedProps;
             
-            document.getElementById('statusModalOverlay').style.display = 'flex';
-            document.getElementById('statusEventTitle').textContent = info.event.title;
+            // Логіка заповнення полів (як було раніше)
+            const defaultSubjects = ['Математика','Укр. мова','Англійська','Історія','Фізика','Хімія','Біологія','Інформатика','Початкова школа'];
             
-            // Логіка видалення (15 хв для автора або безліміт для техніка)
-            const isAuthor = props.creator === sessionStorage.getItem('st_token');
-            const diffMin = (Date.now() - props.createdAt) / 60000;
-            const canDelete = (currentUser.level === 'tech') || (isAuthor && diffMin < 15);
+            if(!defaultSubjects.includes(props.subject)) {
+                 isCustomSubject = true;
+                 document.getElementById('eventSubjectSelect').style.display = 'none';
+                 document.getElementById('eventSubjectInput').style.display = 'block';
+                 document.getElementById('eventSubjectInput').value = props.subject;
+            } else {
+                 isCustomSubject = false;
+                 document.getElementById('eventSubjectSelect').style.display = 'block';
+                 document.getElementById('eventSubjectInput').style.display = 'none';
+                 document.getElementById('eventSubjectSelect').value = props.subject;
+            }
+
+            document.getElementById('eventClass').value = props.sClass;
+            document.getElementById('eventTitle').value = props.baseTitle || "";
             
-            document.getElementById('btnDeleteEvent').style.display = canDelete ? 'block' : 'none';
+            openModal('eventModalOverlay', 'Редагувати урок', true);
+        },
+
+        eventDrop: (info) => updateEventTime(info.event),
+        eventResize: (info) => updateEventTime(info.event),
+
+        // Завантаження подій (без змін)
+        events: function(info, successCallback) {
+            db.ref('events').on('value', snap => {
+                const data = snap.val();
+                const events = [];
+                if(data) {
+                    for(let id in data) {
+                        events.push({
+                            id: id,
+                            title: `${data[id].subject} (${data[id].sClass})`,
+                            start: data[id].start,
+                            end: data[id].end,
+                            backgroundColor: getColor(data[id].subject, data[id].status),
+                            borderColor: getColor(data[id].subject, data[id].status),
+                            extendedProps: data[id]
+                        });
+                    }
+                }
+                successCallback(events);
+            });
+        },
+        
+        // Вигляд картки події (оптимізовано)
+        eventContent: function(arg) {
+            const p = arg.event.extendedProps;
+            let container = document.createElement('div');
+            container.style.fontSize = width < 768 ? '11px' : '12px'; // Менший шрифт на телефоні
+            container.style.lineHeight = '1.2';
+            
+            let html = `<div style="font-weight:700; white-space:nowrap; overflow:hidden;">${p.subject}</div>`;
+            // На телефоні показуємо менше інформації
+            if (width >= 768) {
+                html += `<div>${p.sClass}</div>`;
+                if(p.baseTitle) html += `<div style="opacity:0.8; font-size:0.9em;">${p.baseTitle}</div>`;
+            } else {
+                html += `<div>${p.sClass}</div>`;
+            }
+            
+            container.innerHTML = html;
+            return { domNodes: [container] };
         }
     });
     calendar.render();
