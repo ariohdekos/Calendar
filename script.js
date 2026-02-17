@@ -85,16 +85,33 @@ function initCalendar() {
     let headerRight = 'dayGridMonth,timeGridWeek';
     let slotDuration = '00:30:00'; // Крок 30 хв
 
+// Всередині функції initCalendar()...
+
     if (width < 768) {
         // МОБІЛЬНИЙ
         initialView = 'timeGridDay'; 
-        headerRight = 'today'; // Мінімум кнопок
-        slotDuration = '01:00:00'; // Крупніші слоти
-    } else if (width >= 768 && width < 1100) {
-        // ПЛАНШЕТ (Кастомний вид на 3 дні)
-        initialView = 'timeGridThreeDay';
-        headerRight = 'timeGridThreeDay,timeGridWeek';
+        headerRight = 'today'; 
+        slotDuration = '01:00:00'; 
     }
+
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        // ... (ваші попередні налаштування) ...
+        
+        // ДОДАЙТЕ ЦЕЙ БЛОК ДЛЯ КОРОТКОЇ ДАТИ:
+        titleFormat: { 
+            month: 'short', 
+            day: 'numeric', 
+            weekday: 'short' 
+        }, // Приклад: "Пн, 17 лют"
+
+        headerToolbar: {
+            left: 'prev,next', // Стрілки зліва
+            center: 'title',   // Дата по центру (але через CSS вона буде зверху)
+            right: headerRight // Кнопка "Сьогодні" справа
+        },
+
+        // ... (решта коду без змін) ...
+    });
 
     calendar = new FullCalendar.Calendar(calendarEl, {
         // Додаємо кастомний вид для планшета

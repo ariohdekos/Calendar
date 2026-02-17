@@ -121,15 +121,71 @@ html, body {
 /* --- АДАПТИВНІСТЬ (МЕДІА ЗАПИТИ) --- */
 
 /* Мобільні телефони (до 600px) */
+/* --- МОБІЛЬНА АДАПТАЦІЯ (Книжкова орієнтація) --- */
 @media (max-width: 600px) {
-  .brand { display: none; } /* Ховаємо назву, економимо місце */
-  .fc-toolbar { flex-direction: column; gap: 8px; margin-bottom: 10px !important; }
-  .fc-toolbar-chunk { display: flex; justify-content: space-between; width: 100%; }
-  .fc-button { font-size: 12px !important; padding: 8px 14px !important; } /* Більші кнопки */
-  .modal-content { border-radius: 20px 20px 0 0; position: absolute; bottom: 0; max-width: 100%; width: 100%; height: auto; max-height: 85vh; padding-bottom: 20px; }
-  .modal-footer { padding-bottom: 30px; } /* Врахування Safe Area на iPhone */
-  #mainContainer { padding: 65px 0 0 0; } /* На весь екран */
-  #calendar { border-radius: 0; border: none; }
+  
+  /* 1. Верхня панель (TopBar) */
+  #topBar {
+    padding: 0 10px; /* Менше відступів */
+    justify-content: center; /* Центруємо, якщо бренд схований */
+  }
+  .brand { display: none; } /* Прибираємо довгу назву */
+  .user-controls { width: 100%; justify-content: space-between; } /* Розтягуємо кнопки виходу/ролі */
+
+  /* 2. Шапка календаря (Два поверхи) */
+  .fc-header-toolbar {
+    display: flex;
+    flex-direction: column; /* Ставимо елементи в стовпчик */
+    gap: 5px;
+    margin-bottom: 5px !important;
+  }
+  
+  .fc-toolbar-chunk {
+    display: flex;
+    justify-content: space-between;
+    width: 100%; /* Розтягуємо на всю ширину */
+    align-items: center;
+  }
+  
+  /* Перший рядок (Заголовок) */
+  .fc-toolbar-chunk:nth-child(2) {
+    order: -1; /* Піднімаємо заголовок на самий верх */
+    justify-content: center;
+    margin-bottom: 5px;
+  }
+
+  .fc-toolbar-title {
+    font-size: 1.2rem !important; /* Трохи менший шрифт */
+  }
+
+  /* Кнопки навігації */
+  .fc-button {
+    padding: 8px 12px !important; /* Більші кнопки для пальців */
+    font-size: 0.9rem !important;
+  }
+
+  /* 3. Сітка календаря */
+  .fc-view-harness {
+    background: #fff;
+  }
+  
+  /* 4. Модальне вікно (Знизу екрану, як в iPhone) */
+  .modal-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0; /* Закруглення тільки зверху */
+    margin: 0;
+    max-height: 80vh; /* Не більше 80% екрану */
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
 }
 
 /* Планшети (600px - 1024px) */
