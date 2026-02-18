@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Liceum Manager v9.2</title>
+  <title>Liceum Manager v10.0 (Final)</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" href="/favicon.jpg">
+  
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -41,19 +41,19 @@
             <div class="panel-content">
                 <div style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 10px; font-size: 13px;">
                   <b>1. Створення:</b><br>
-                  Натисніть на час у календарі. Вкажіть предмет та клас.
+                  Натисніть на час. Вкажіть предмет та клас.
                 </div>
                 <div style="background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 10px; font-size: 13px;">
                   <b>2. Форс-мажор:</b><br>
-                  Натисніть на урок -> "Статус" -> оберіть варіант.
+                  Натисніть на урок -> "Статус".
                 </div>
                 <div style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 10px; font-size: 13px;">
                   <b>3. Видалення:</b><br>
-                  Доступне <b>15 хвилин</b>. Далі — тільки через Адміна.
+                  Доступне <b>15 хвилин</b>. Далі — через Адміна.
                 </div>
                 <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; border-left: 4px solid #9ca3af; font-size: 13px;">
                   <b>4. Технічна перерва:</b><br>
-                  Сірі блоки — студія зайнята адміністратором.
+                  Сірі блоки — студія зайнята.
                 </div>
             </div>
         </details>
@@ -64,7 +64,7 @@
           <summary>🔍 Фільтр вчителів</summary>
           <div class="panel-content">
              <div id="filterList"></div>
-             <button class="btn btn-light" onclick="resetFilters()">Показати всіх</button>
+             <button class="btn btn-light" onclick="resetFilters()" style="width:100%; margin-top:10px;">Показати всіх</button>
           </div>
         </details>
       </div>
@@ -90,7 +90,7 @@
         <button class="btn-logout" onclick="closeSettings()">✕</button>
       </div>
       <div class="modal-body">
-        <h4>Telegram Повідомлення</h4>
+        <h4>Telegram Bot (спільний)</h4>
         <div class="input-group">
             <label>Bot Token</label>
             <input type="text" id="tgToken" placeholder="Вставте токен...">
@@ -99,13 +99,13 @@
             <label>Chat ID</label>
             <input type="text" id="tgChatId" placeholder="ID чату...">
         </div>
-        <button class="btn btn-primary" onclick="saveSettings()" style="width:100%">Зберегти TG</button>
+        <button class="btn btn-primary" onclick="saveSettings()" style="width:100%">Зберегти в Хмару</button>
         
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
         
         <h4>🔑 Керування паролями</h4>
         <div class="input-group">
-            <label>Роль для зміни</label>
+            <label>Роль</label>
             <select id="passRoleSelector">
                 <option value="teacher">Викладач</option>
                 <option value="admin">Адмін</option>
@@ -113,10 +113,10 @@
             </select>
         </div>
         <div class="input-group">
-            <label>Новий код (цифри)</label>
+            <label>Новий код</label>
             <input type="text" id="newPassCode" placeholder="Напр. 555">
         </div>
-        <button class="btn btn-danger" onclick="updatePassInDB()" style="width:100%">Оновити пароль</button>
+        <button class="btn btn-danger" onclick="updatePassInDB()" style="width:100%">Змінити пароль</button>
       </div>
     </div>
   </div>
@@ -137,9 +137,10 @@
         <div id="bookingFields">
             <div class="input-group">
                 <label>Предмет</label>
-                <input type="text" id="eventSubject" list="subjectsList" placeholder="Оберіть предмет...">
+                <input type="text" id="eventSubject" list="subjectsList" placeholder="Оберіть або введіть...">
                 <datalist id="subjectsList">
-                    <option value="Математика"></option><option value="Українська мова"></option><option value="Англійська мова"></option><option value="Історія України"></option>
+                    <option value="Математика"><option value="Українська мова"><option value="Англійська мова"><option value="Історія України">
+                    <option value="Фізика"><option value="Хімія"><option value="Біологія"><option value="Географія">
                 </datalist>
             </div>
             <div class="input-grid">
@@ -166,7 +167,6 @@
         <div class="modal-header"><h3>Керування</h3><button class="btn-logout" onclick="closeStatusModal()">✕</button></div>
         <div class="modal-body">
             <h4 id="statusEventTitle"></h4>
-            <label>Змінити статус:</label>
             <select id="eventStatus" style="width:100%; padding:10px; margin-top:10px;">
                 <option value="">🟢 Все за планом</option>
                 <option value="✅ Проведено">✅ Проведено</option>
@@ -184,9 +184,10 @@
   <div id="reportOverlay" class="overlay">
     <div class="modal-content" style="max-width:800px; width:95%;">
       <div class="modal-header"><h3>📊 Звітність</h3><button class="btn-logout" onclick="closeReport()">✕</button></div>
-  <div id="reportPrintArea" style="padding:20px; max-height:60vh; overflow-y:auto;">
-        <div id="reportSummary" style="margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;"></div>
+      <div id="reportPrintArea" style="padding:20px; max-height:60vh; overflow-y:auto;">
         
+        <div id="reportSummary" style="margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;"></div>
+
         <table class="report-table" style="width:100%; border-collapse:collapse;">
           <thead><tr style="background:#f3f4f6;"><th>Вчитель</th><th>Дата</th><th>Предмет</th><th>Клас</th><th>Уроків</th><th>Підпис</th></tr></thead>
           <tbody id="reportTableBody"></tbody>
