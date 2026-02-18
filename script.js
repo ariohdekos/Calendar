@@ -182,13 +182,37 @@ window.openSettings = () => {
 window.closeSettings = () => document.getElementById('settingsModal').style.display = 'none';
 
 window.saveSettings = () => {
-    const token = document.getElementById('tgToken').value.trim();
-    const chat = document.getElementById('tgChatId').value.trim();
-    if(!token || !chat) return alert("Введіть токен і чат ID!");
+    console.log("Починаємо збереження..."); // Перевірка, чи кнопка працює
+    
+    const tokenElem = document.getElementById('tgToken');
+    const chatElem = document.getElementById('tgChatId');
 
-    // Зберігаємо в загальну базу
-    db.ref('settings_tg').set({ token, chatId }).then(() => {
-        alert("✅ Налаштування TG збережено в хмару!");
+    if (!tokenElem || !chatElem) {
+        return alert("Помилка: Не знайдено поля введення в HTML!");
+    }
+
+    const token = tokenElem.value.trim();
+    const chat = chatElem.value.trim();
+    
+    console.log("Дані:", token, chat);
+
+    if(!token || !chat) {
+        return alert("⚠️ Будь ласка, заповніть обидва поля (Token та Chat ID)!");
+    }
+    
+    // Спробуємо записати
+    db.ref('settings_tg').set({
+        token: token,
+        chatId: chat
+    })
+    .then(() => {
+        console.log("Успіх!");
+        alert("✅ Налаштування успішно збережено в Хмару!");
+        closeSettings();
+    })
+    .catch((error) => {
+        console.error("Помилка Firebase:", error);
+        alert("❌ Помилка запису в базу:\n" + error.message + "\n\nПеревірте вкладку 'Rules' у Firebase!");
     });
 };
 
