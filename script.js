@@ -113,8 +113,6 @@ function initCalendar() {
     });
     calendar.render();
     
-    loadTeachers();
-    
     loadDynamicLists();
 }
 function loadDynamicLists() {
