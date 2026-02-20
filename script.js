@@ -118,12 +118,37 @@ function initCalendar() {
 // 4. ОПЕРАЦІЇ З ДАНИМИ
 // ==========================================
 window.confirmBooking = () => {
+    // Отримуємо час з форми
+    const startTimeVal = document.getElementById('startTime').value;
+    const endTimeVal = document.getElementById('endTime').value;
+
+    // --- ДОДАНО: 1. Валідація правильного часу ---
+    if (startTimeVal >= endTimeVal) {
+        alert("Помилка: Час завершення уроку має бути пізніше за час його початку!");
+        return; // Зупиняємо збереження
+    }
+
     const isBreak = document.getElementById('isTechBreak').checked;
     const id = Date.now().toString();
     const datePart = selectedSlot.startStr.split('T')[0];
-    const start = datePart + 'T' + document.getElementById('startTime').value + ':00';
-    const end = datePart + 'T' + document.getElementById('endTime').value + ':00';
+    const start = datePart + 'T' + startTimeVal + ':00';
+    const end = datePart + 'T' + endTimeVal + ':00';
 
+// --- ДОДАНО: 2. Валідація накладок (Овербукінг) ---
+    if (!isBreak) { 
+        const teacherName = document.getElementById('eventTeacher').value;
+        const availabilityStatus = checkSlotAvailability(teacherName, start, end);
+        
+        if (availabilityStatus === "tech_break") {
+            alert("Запис неможливий: на цей час встановлена технічна перерва!");
+            return; // Зупиняємо збереження
+        } else if (availabilityStatus === "teacher_busy") {
+            alert(`Увага! У викладача ${teacherName} вже є заняття у цей часовий проміжок.`);
+            return; // Зупиняємо збереження
+        }
+    }
+
+    // Далі йде ваш стандартний код формування даних...
     let data = {
         id, start, end,
         extendedProps: { createdAt: Date.now(), creator: sessionStorage.getItem('st_token') }
@@ -142,7 +167,7 @@ window.confirmBooking = () => {
         data.backgroundColor = document.getElementById('eventColor').value;
         data.extendedProps = {
             ...data.extendedProps,
-            teacher: document.getElementById('eventTeacher').value,
+            teacher: document.getElementById('eventTeacher').value, // Тут ми беремо вчителя
             subject: subj, className: cls,
             count: document.getElementById('eventCount').value,
             type: "lesson"
@@ -314,3 +339,26 @@ window.toggleSidebar = () => {
     const s = document.querySelector('.sidebar');
     s.style.display = (getComputedStyle(s).display === 'none') ? 'block' : 'none';
 };
+
+// Перевірка, чи вільний час (враховує і викладачів, і технічні перерви)
+function checkSlotAvailability(teacherName, newStart, newEnd) {
+    const events = calendar.getEvents(); 
+    const startTimestamp = new Date(newStart).getTime();
+    const endTimestamp = new Date(newEnd).getTime();
+
+    for (let ev of events) {
+        const evStart = ev.start.getTime();
+        const evEnd = ev.end.getTime();
+
+        // Перевіряємо, чи перетинається час
+        if (startTimestamp < evEnd && endTimestamp > evStart) {
+            if (ev.extendedProps.type === 'tech') {
+                return "tech_break"; // Знайдено технічну перерву
+            }
+            if (ev.extendedProps.type === 'lesson' && ev.extendedProps.teacher === teacherName) {
+                return "teacher_busy"; // Цей викладач вже зайнятий
+            }
+        }
+    }
+    return "available"; // Час вільний
+}
