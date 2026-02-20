@@ -42,7 +42,12 @@ window.tryLogin = () => {
         sessionStorage.setItem('st_token', pass);
         startApp();
     } else {
-        alert("Невірний код!");
+        Swal.fire({
+        icon: 'error',
+        title: 'Помилка!',
+        text: 'Невірний код доступу',
+        confirmButtonColor: '#4F46E5'
+});
     }
 };
 
@@ -155,7 +160,12 @@ window.confirmBooking = () => {
 
     // --- ДОДАНО: 1. Валідація правильного часу ---
     if (startTimeVal >= endTimeVal) {
-        alert("Помилка: Час завершення уроку має бути пізніше за час його початку!");
+        Swal.fire({
+        icon: 'warning',
+        title: 'Некоректний час',
+        text: 'Час завершення уроку має бути пізніше за час його початку!',
+        confirmButtonColor: '#4F46E5'
+    });
         return; // Зупиняємо збереження
     }
 
@@ -171,10 +181,20 @@ window.confirmBooking = () => {
         const availabilityStatus = checkSlotAvailability(teacherName, start, end);
         
         if (availabilityStatus === "tech_break") {
-            alert("Запис неможливий: на цей час встановлена технічна перерва!");
+            Swal.fire({
+        icon: 'error',
+        title: 'Технічна перерва',
+        text: 'Запис неможливий: на цей час студія зачинена!',
+        confirmButtonColor: '#4F46E5'
+        });
             return; // Зупиняємо збереження
         } else if (availabilityStatus === "teacher_busy") {
-            alert(`Увага! У викладача ${teacherName} вже є заняття у цей часовий проміжок.`);
+           Swal.fire({
+            icon: 'error',
+            title: 'Накладка в розкладі',
+            text: `У викладача ${teacherName} вже є заняття у цей часовий проміжок.`,
+            confirmButtonColor: '#4F46E5'
+        });
             return; // Зупиняємо збереження
         }
     }
@@ -192,7 +212,15 @@ window.confirmBooking = () => {
     } else {
         const subj = document.getElementById('eventSubject').value;
         const cls = document.getElementById('eventClass').value;
-        if (!subj || !cls) return alert("Заповніть предмет та клас!");
+        if (!subj || !cls) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Увага',
+            text: 'Будь ласка, заповніть предмет та клас!',
+            confirmButtonColor: '#4F46E5'
+        });
+        return;
+    }
         
         data.title = `${subj} (${cls})`;
         data.backgroundColor = document.getElementById('eventColor').value;
@@ -218,10 +246,31 @@ window.applyStatus = () => {
 };
 
 window.handleDelete = () => {
-    if (confirm("Видалити?")) {
-        db.ref('events/' + clickedEvent.id).remove();
-        closeStatusModal();
-    }
+    Swal.fire({
+        title: 'Ви впевнені?',
+        text: "Цю дію неможливо скасувати!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444', // Червоний для видалення
+        cancelButtonColor: '#6B7280',  // Сірий для скасування
+        confirmButtonText: 'Так, видалити',
+        cancelButtonText: 'Скасувати'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Користувач підтвердив видалення
+            db.ref('events/' + clickedEvent.id).remove();
+            sendTG(`🗑 Видалено: ${clickedEvent.title}`);
+            closeStatusModal();
+            
+            // Маленьке сповіщення про успіх
+            Swal.fire({
+                title: 'Видалено!',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    });
 };
 
 // ==========================================
