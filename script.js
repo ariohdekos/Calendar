@@ -112,8 +112,40 @@ function initCalendar() {
         }
     });
     calendar.render();
+    
+    loadTeachers();
+    
+    loadDynamicLists();
 }
+function loadDynamicLists() {
+    // 1. Завантаження предметів
+    db.ref('settings/subjects').on('value', snap => {
+        // Якщо в базі ще нічого немає, даємо базовий масив
+        const subjects = snap.val() || ["Математика", "Українська мова", "Англійська мова", "Історія України"]; 
+        const list = document.getElementById('subjectsList');
+        list.innerHTML = ''; // Очищаємо перед оновленням
+        
+        subjects.forEach(subj => {
+            let option = document.createElement('option');
+            option.value = subj;
+            list.appendChild(option);
+        });
+    });
 
+    // 2. Завантаження класів
+    db.ref('settings/classes').on('value', snap => {
+        // Базовий масив класів, якщо в базі пусто
+        const classes = snap.val() || ["10-А", "10-Б", "11-А", "11-Б", "11-В"]; 
+        const list = document.getElementById('classesList');
+        list.innerHTML = ''; 
+        
+        classes.forEach(cls => {
+            let option = document.createElement('option');
+            option.value = cls;
+            list.appendChild(option);
+        });
+    });
+}
 // ==========================================
 // 4. ОПЕРАЦІЇ З ДАНИМИ
 // ==========================================
