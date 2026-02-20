@@ -114,6 +114,7 @@ function initCalendar() {
     calendar.render();
     
     loadDynamicLists();
+     initSettingsUI();
 }
 function loadDynamicLists() {
     // 1. Завантаження предметів
@@ -392,3 +393,66 @@ function checkSlotAvailability(teacherName, newStart, newEnd) {
     }
     return "available"; // Час вільний
 }
+// --- КЕРУВАННЯ ПРЕДМЕТАМИ ТА КЛАСАМИ В НАЛАШТУВАННЯХ ---
+
+function initSettingsUI() {
+    // Показуємо цей блок тільки якщо користувач - Технік (або Адмін)
+    if (currentUser && (currentUser.level === 'tech' || currentUser.level === 'admin')) {
+        document.getElementById('techSettingsBlock').style.display = 'block';
+
+        // Слухаємо та малюємо список предметів
+        db.ref('settings/subjects').on('value', snap => {
+            const list = snap.val() || [];
+            const ul = document.getElementById('settingsSubjectsList');
+            ul.innerHTML = list.map((item, index) => `
+                <li style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #eee;">
+                    ${item} 
+                    <button class="btn btn-danger" style="padding: 2px 6px; font-size: 12px;" onclick="removeSettingItem('subjects', ${index})">❌</button>
+                </li>
+            `).join('');
+        });
+
+        // Слухаємо та малюємо список класів
+        db.ref('settings/classes').on('value', snap => {
+            const list = snap.val() || [];
+            const ul = document.getElementById('settingsClassesList');
+            ul.innerHTML = list.map((item, index) => `
+                <li style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #eee;">
+                    ${item} 
+                    <button class="btn btn-danger" style="padding: 2px 6px; font-size: 12px;" onclick="removeSettingItem('classes', ${index})">❌</button>
+                </li>
+            `).join('');
+        });
+    }
+}
+
+// Функція додавання нового елемента
+window.addSettingItem = (path, inputId) => {
+    const input = document.getElementById(inputId);
+    const val = input.value.trim();
+    if (!val) return; // Якщо поле порожнє - нічого не робимо
+
+    // Отримуємо поточний список і додаємо нове значення
+    db.ref(`settings/${path}`).once('value', snap => {
+        let list = snap.val() || [];
+        if (!list.includes(val)) {
+            list.push(val);
+            db.ref(`settings/${path}`).set(list).then(() => {
+                input.value = ''; // Очищаємо поле після успішного збереження
+            });
+        } else {
+            alert("Такий запис вже існує!");
+        }
+    });
+};
+
+// Функція видалення елемента
+window.removeSettingItem = (path, index) => {
+    if (!confirm("Ви впевнені, що хочете видалити цей запис?")) return;
+    
+    db.ref(`settings/${path}`).once('value', snap => {
+        let list = snap.val() || [];
+        list.splice(index, 1); // Видаляємо 1 елемент за індексом
+        db.ref(`settings/${path}`).set(list); // Оновлюємо базу
+    });
+};

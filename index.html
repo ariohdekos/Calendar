@@ -119,6 +119,29 @@
         <button class="btn btn-danger" onclick="updatePassInDB()" style="width:100%">Змінити пароль</button>
       </div>
     </div>
+    <div id="techSettingsBlock" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #E5E7EB;">
+    <h3 style="margin-bottom: 15px;">🛠 Керування предметами та класами</h3>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="background: #F9FAFB; padding: 15px; border-radius: 8px; border: 1px solid #E5E7EB;">
+            <h4 style="margin-top: 0;">📚 Предмети</h4>
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <input type="text" id="newSubjectInput" placeholder="Новий предмет" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px;">
+                <button class="btn btn-primary" onclick="addSettingItem('subjects', 'newSubjectInput')">➕</button>
+            </div>
+            <ul id="settingsSubjectsList" style="list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto;"></ul>
+        </div>
+
+        <div style="background: #F9FAFB; padding: 15px; border-radius: 8px; border: 1px solid #E5E7EB;">
+            <h4 style="margin-top: 0;">🎓 Класи</h4>
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <input type="text" id="newClassInput" placeholder="Новий клас" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px;">
+                <button class="btn btn-primary" onclick="addSettingItem('classes', 'newClassInput')">➕</button>
+            </div>
+            <ul id="settingsClassesList" style="list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto;"></ul>
+        </div>
+    </div>
+</div>
   </div>
 
   <div id="modalOverlay" class="overlay">
