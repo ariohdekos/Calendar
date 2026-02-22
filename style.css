@@ -58,7 +58,7 @@ input:focus, select:focus { border-color: #4F46E5; }
 .modern-modal { width: 420px !important; padding: 0 !important; overflow: hidden; border-radius: 20px !important; border: 1px solid rgba(0,0,0,0.05); background: white;}
 .modal-header { padding: 20px 24px; background: #fcfcfd; border-bottom: 1px solid #f1f1f4; display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { margin: 0; font-size: 18px; }
-.modal-body { padding: 20px 24px; background: white; }
+.modal-body { padding: 20px 24px;background: white; max-height: 70vh; overflow-y: auto;}
 .modal-footer { padding: 16px 24px; background: #fcfcfd; border-top: 1px solid #f1f1f4; display: flex; gap: 12px; }
 
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }

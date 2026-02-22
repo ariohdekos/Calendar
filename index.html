@@ -94,21 +94,42 @@
 
       <div class="modal-body">
         
-        <h4>Telegram Bot (спільний)</h4>
-        <div class="input-group">
-            <label>Bot Token</label>
-            <input type="text" id="tgToken" placeholder="Вставте токен...">
+        <div class="settings-grid" style="margin-bottom: 25px;">
+          
+          <div class="settings-card">
+            <h4>🤖 Telegram Bot</h4>
+            <div style="margin-bottom: 10px;">
+                <label style="display:block; font-size: 0.85em; color: #6B7280; margin-bottom: 5px;">Bot Token</label>
+                <input type="text" id="tgToken" placeholder="Вставте токен..." style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; outline: none;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size: 0.85em; color: #6B7280; margin-bottom: 5px;">Chat ID</label>
+                <input type="text" id="tgChatId" placeholder="ID чату..." style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; outline: none;">
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()" style="width:100%; padding: 10px; border-radius: 8px;">💾 Зберегти налаштування</button>
+          </div>
+
+          <div class="settings-card">
+            <h4>🔑 Керування паролями</h4>
+            <div style="margin-bottom: 10px;">
+                <label style="display:block; font-size: 0.85em; color: #6B7280; margin-bottom: 5px;">Роль користувача</label>
+                <select id="roleSelect" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; background: white; outline: none;">
+                    <option value="999">Викладач</option>
+                    <option value="888">Адмін</option>
+                    <option value="777">Технік</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size: 0.85em; color: #6B7280; margin-bottom: 5px;">Новий пін-код</label>
+                <input type="text" id="newPassInput" placeholder="Введіть код..." style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; outline: none;">
+            </div>
+            <button class="btn btn-primary" onclick="changePassword()" style="width:100%; padding: 10px; border-radius: 8px; background: #10B981; border: none;">🔄 Змінити пароль</button>
+          </div>
+
         </div>
-        <div class="input-group">
-            <label>Chat ID</label>
-            <input type="text" id="tgChatId" placeholder="ID чату...">
-        </div>
-        <button class="btn btn-primary" onclick="saveSettings()" style="width:100%">Зберегти в Хмару</button>
-        
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #E5E7EB;">
-        
-        <div id="techSettingsBlock" style="display: none; margin-top: 20px;">
-            <h3 style="margin-top: 0; margin-bottom: 15px; color: #111827;">🛠 Керування предметами та класами</h3>
+
+        <div id="techSettingsBlock" style="display: none; border-top: 2px dashed #E5E7EB; padding-top: 25px;">
+            <h3 style="margin-top: 0; margin-bottom: 15px; color: #111827; font-size: 1.1em;">🛠 Керування предметами та класами</h3>
             
             <div class="settings-grid">
                 <div class="settings-card">
@@ -129,6 +150,8 @@
                     <ul id="settingsClassesList" class="settings-list"></ul>
                 </div>
             </div> </div> </div> </div> </div> ```
+
+
 
 
 <div id="modalOverlay" class="overlay">
