@@ -522,29 +522,54 @@ function initSettingsUI() {
 window.addSettingItem = (path, inputId) => {
     const input = document.getElementById(inputId);
     const val = input.value.trim();
-    if (!val) return; // Якщо поле порожнє - нічого не робимо
+    if (!val) return; 
 
-    // Отримуємо поточний список і додаємо нове значення
     db.ref(`settings/${path}`).once('value', snap => {
         let list = snap.val() || [];
         if (!list.includes(val)) {
             list.push(val);
             db.ref(`settings/${path}`).set(list).then(() => {
-                input.value = ''; // Очищаємо поле після успішного збереження
+                input.value = ''; 
+                // Маленьке сповіщення про успіх
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Додано!',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
             });
         } else {
-            alert("Такий запис вже існує!");
+            // Красива помилка замість старого alert
+            Swal.fire({
+                icon: 'error',
+                title: 'Помилка',
+                text: 'Такий запис вже існує!',
+                confirmButtonColor: '#4F46E5'
+            });
         }
     });
 };
 
 // Функція видалення елемента
 window.removeSettingItem = (path, index) => {
-    if (!confirm("Ви впевнені, що хочете видалити цей запис?")) return;
-    
-    db.ref(`settings/${path}`).once('value', snap => {
-        let list = snap.val() || [];
-        list.splice(index, 1); // Видаляємо 1 елемент за індексом
-        db.ref(`settings/${path}`).set(list); // Оновлюємо базу
+    // Красиве підтвердження замість старого confirm
+    Swal.fire({
+        title: 'Видалити запис?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Так, видалити',
+        cancelButtonText: 'Скасувати'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            db.ref(`settings/${path}`).once('value', snap => {
+                let list = snap.val() || [];
+                list.splice(index, 1); 
+                db.ref(`settings/${path}`).set(list); 
+            });
+        }
     });
 };
