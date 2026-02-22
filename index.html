@@ -84,13 +84,16 @@
     </div>
   </div>
 
-  <div id="settingsModal" class="overlay">
-   <div class="modal-content modern-modal" style="max-width: 800px; width: 95%;">
+<div id="settingsModal" class="overlay">
+    <div class="modal-content modern-modal" style="max-width: 800px; width: 95%;">
+      
       <div class="modal-header">
         <h3>⚙️ Налаштування</h3>
         <button class="btn-logout" onclick="closeSettings()">✕</button>
       </div>
+
       <div class="modal-body">
+        
         <h4>Telegram Bot (спільний)</h4>
         <div class="input-group">
             <label>Bot Token</label>
@@ -102,52 +105,31 @@
         </div>
         <button class="btn btn-primary" onclick="saveSettings()" style="width:100%">Зберегти в Хмару</button>
         
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #E5E7EB;">
         
-        <h4>🔑 Керування паролями</h4>
-        <div class="input-group">
-            <label>Роль</label>
-            <select id="passRoleSelector">
-                <option value="teacher">Викладач</option>
-                <option value="admin">Адмін</option>
-                <option value="tech">Технік</option>
-            </select>
-        </div>
-        <div class="input-group">
-            <label>Новий код</label>
-            <input type="text" id="newPassCode" placeholder="Напр. 555">
-        </div>
-        <button class="btn btn-danger" onclick="updatePassInDB()" style="width:100%">Змінити пароль</button>
-      </div>
-    </div>
-    <div id="techSettingsBlock" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #E5E7EB;">
-    <h3 style="margin-bottom: 15px;">🛠 Керування предметами та класами</h3>
-    
-<div id="techSettingsBlock" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #E5E7EB;">
-    <h3 style="margin-top: 0; margin-bottom: 15px; color: #91b0f1;">🛠 Керування предметами та класами</h3>
-    
-    <div class="settings-grid">
-        <div class="settings-card">
-            <h4>📚 Предмети</h4>
-            <div class="input-group-flex">
-                <input type="text" id="newSubjectInput" placeholder="Новий предмет">
-                <button class="btn btn-primary" onclick="addSettingItem('subjects', 'newSubjectInput')">➕</button>
-            </div>
-            <ul id="settingsSubjectsList" class="settings-list"></ul>
-        </div>
+        <div id="techSettingsBlock" style="display: none; margin-top: 20px;">
+            <h3 style="margin-top: 0; margin-bottom: 15px; color: #111827;">🛠 Керування предметами та класами</h3>
+            
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h4>📚 Предмети</h4>
+                    <div class="input-group-flex">
+                        <input type="text" id="newSubjectInput" placeholder="Новий предмет">
+                        <button class="btn btn-primary" onclick="addSettingItem('subjects', 'newSubjectInput')">➕</button>
+                    </div>
+                    <ul id="settingsSubjectsList" class="settings-list"></ul>
+                </div>
 
-<div class="settings-card">
-            <h4>🎓 Класи</h4>
-            <div class="input-group-flex">
-                <input type="text" id="newClassInput" placeholder="Новий клас">
-                <button class="btn btn-primary" onclick="addSettingItem('classes', 'newClassInput')">➕</button>
-            </div>
-            <ul id="settingsClassesList" class="settings-list"></ul>
-          </div>
-        </div>
-      </div> 
-    </div> 
-</div> 
+                <div class="settings-card">
+                    <h4>🎓 Класи</h4>
+                    <div class="input-group-flex">
+                        <input type="text" id="newClassInput" placeholder="Новий клас">
+                        <button class="btn btn-primary" onclick="addSettingItem('classes', 'newClassInput')">➕</button>
+                    </div>
+                    <ul id="settingsClassesList" class="settings-list"></ul>
+                </div>
+            </div> </div> </div> </div> </div> ```
+
 
 <div id="modalOverlay" class="overlay">
     <div class="modal-content modern-modal">
