@@ -13,6 +13,14 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-color);
 #loginScreen { position: fixed; inset: 0; background: #1F2937; display: flex; align-items: center; justify-content: center; z-index: 5000; }
 .login-box { background: white; padding: 40px; border-radius: 24px; width: 320px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
 .login-box h2 { margin-top: 0; color: #111827; }
+/* Стилі для герба на екрані входу */
+.login-logo {
+    width: 130px; /* Ширина герба (можете змінити, якщо треба більше/менше) */
+    height: auto;
+    margin: 0 auto 20px auto; /* Вирівнювання по центру та відступ знизу */
+    display: block;
+    filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.1)); /* Легка тінь для краси */
+}
 .login-box input { width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 20px; border: 2px solid #E5E7EB; border-radius: 12px; font-size: 16px; text-align: center; }
 .login-box .btn { width: 100%; }
 
@@ -179,4 +187,55 @@ summary::-webkit-details-marker { display: none; }
 /* На мобільних екранах робимо колонки одна під одною */
 @media (max-width: 768px) {
     .settings-grid { grid-template-columns: 1fr; gap: 15px; }
+}
+/* =========================================
+   КРАСА ТА ДИЗАЙН (UI/UX ПОКРАЩЕННЯ)
+   ========================================= */
+
+/* 1. Сучасний екран входу (Градієнт + Скло) */
+#loginScreen { 
+    background: linear-gradient(135deg, #4F46E5 0%, #10B981 100%); 
+}
+.login-box { 
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
+
+/* 2. Кастомні тонкі скролбари для всіх вікон */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+/* 3. Плаваючий ефект для карток у Налаштуваннях */
+.settings-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.settings-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+}
+
+/* 4. Живі кнопки (мікроінтеракції при наведенні) */
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    filter: brightness(1.05);
+}
+.btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Трохи заокруглюємо сам календар для м'якості */
+.fc {
+    background: white;
+    padding: 15px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
