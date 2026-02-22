@@ -233,41 +233,84 @@ window.confirmBooking = () => {
         };
     }
 
+// Показываем спиннер перед отправкой в базу
+    Swal.fire({
+        title: 'Збереження...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Отправляем данные
     db.ref('events/' + id).set(data).then(() => {
         sendTG(`🆕 Запис: ${data.title}\n📅 ${start.replace('T',' ')}`);
         closeModal();
+        
+        // Показываем сообщение об успехе, которое само исчезнет через 1.5 секунды
+        Swal.fire({
+            icon: 'success',
+            title: 'Збережено!',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    }).catch((error) => {
+        // На случай ошибки интернета
+        Swal.fire('Помилка', 'Не вдалося зберегти дані', 'error');
     });
 };
 
 window.applyStatus = () => {
-    const s = document.getElementById('eventStatus').value;
-    db.ref('events/' + clickedEvent.id + '/extendedProps/status').set(s);
-    closeStatusModal();
-};
+    const newStatus = document.getElementById('eventStatusSelect').value;
+    
+    // Включаем спиннер
+    Swal.fire({
+        title: 'Оновлення статусу...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
 
+    db.ref('events/' + clickedEvent.id + '/extendedProps/status').set(newStatus).then(() => {
+        closeStatusModal();
+        Swal.fire({
+            title: 'Статус оновлено!',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    });
+};
 window.handleDelete = () => {
     Swal.fire({
         title: 'Ви впевнені?',
         text: "Цю дію неможливо скасувати!",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#EF4444', // Червоний для видалення
-        cancelButtonColor: '#6B7280',  // Сірий для скасування
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
         confirmButtonText: 'Так, видалити',
         cancelButtonText: 'Скасувати'
     }).then((result) => {
         if (result.isConfirmed) {
-            // Користувач підтвердив видалення
-            db.ref('events/' + clickedEvent.id).remove();
-            sendTG(`🗑 Видалено: ${clickedEvent.title}`);
-            closeStatusModal();
-            
-            // Маленьке сповіщення про успіх
+            // Запускаем спиннер
             Swal.fire({
-                title: 'Видалено!',
-                icon: 'success',
-                timer: 1500,
-                showConfirmButton: false
+                title: 'Видалення...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            // Удаляем из Firebase
+            db.ref('events/' + clickedEvent.id).remove().then(() => {
+                sendTG(`🗑 Видалено: ${clickedEvent.title}`);
+                closeStatusModal();
+                
+                // Успешное удаление
+                Swal.fire({
+                    title: 'Видалено!',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             });
         }
     });

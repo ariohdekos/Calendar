@@ -113,3 +113,23 @@ summary::-webkit-details-marker { display: none; }
 }
 
 .color-picker:hover { transform: scale(1.1); }
+
+/* Виводимо сповіщення SweetAlert2 на передній план */
+.swal2-container {
+    z-index: 10000 !important;
+}
+/* Стилі для меню налаштувань (Технік/Адмін) */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.settings-card { background: #F9FAFB; padding: 15px; border-radius: 12px; border: 1px solid #E5E7EB; }
+.settings-card h4 { margin: 0 0 10px 0; font-size: 1em; color: #374151; }
+.input-group-flex { display: flex; gap: 8px; margin-bottom: 10px; }
+.input-group-flex input { flex: 1; padding: 8px 12px; border: 1px solid #D1D5DB; border-radius: 8px; outline: none; }
+.input-group-flex input:focus { border-color: var(--admin-color); }
+.settings-list { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; }
+.settings-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #E5E7EB; font-size: 0.9em; }
+.settings-list li:last-child { border-bottom: none; }
+
+/* На мобільних екранах робимо колонки одна під одною */
+@media (max-width: 768px) {
+    .settings-grid { grid-template-columns: 1fr; }
+}
