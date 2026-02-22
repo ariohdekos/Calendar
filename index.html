@@ -232,8 +232,9 @@
           <tbody id="reportTableBody"></tbody>
         </table>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" onclick="window.print()">🖨 Друкувати</button>
+     <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid #E5E7EB; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="window.print()">🖨 Друкувати</button>
+        <button class="btn btn-primary" style="background: #10B981; border: none;" onclick="exportToCSV()">📥 Експорт в Excel (.csv)</button>
       </div>
     </div>
   </div>

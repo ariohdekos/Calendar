@@ -618,3 +618,51 @@ window.removeSettingItem = (path, index) => {
         }
     });
 };
+// --- ФУНКЦІЯ ЕКСПОРТУ В EXCEL (CSV) ---
+window.exportToCSV = () => {
+    // Беремо всі уроки з календаря
+    const events = calendar.getEvents()
+        .filter(e => e.extendedProps.type === 'lesson')
+        .sort((a, b) => a.start - b.start);
+
+    // Додаємо специфічний маркер \uFEFF, щоб Excel зрозумів українську мову (UTF-8)
+    let csvContent = "\uFEFF"; 
+    // Заголовки таблиці (використовуємо крапку з комою, бо Excel в Європі любить її більше)
+    csvContent += "Вчитель;Дата;Час;Предмет;Клас;Статус\n"; 
+
+    // Перебираємо уроки і формуємо рядки
+    events.forEach(e => {
+        const teacher = e.extendedProps.teacher || 'Невідомий';
+        const date = e.start.toLocaleDateString();
+        const time = e.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const subject = e.extendedProps.subject || '';
+        const className = e.extendedProps.className || '';
+        // Очищаємо статус від емодзі для чистоти документа (опціонально)
+        const status = e.extendedProps.status || 'Все за планом';
+
+        const row = `"${teacher}";"${date}";"${time}";"${subject}";"${className}";"${status}"`;
+        csvContent += row + "\n";
+    });
+
+    // Створюємо файл і завантажуємо його
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Zvit_Liceum_${new Date().toLocaleDateString()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Красиве сповіщення про успіх
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Файл успішно завантажено!',
+        showConfirmButton: false,
+        timer: 2000
+    });
+};
