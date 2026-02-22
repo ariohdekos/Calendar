@@ -392,25 +392,70 @@ window.openReport = () => {
         .filter(e => e.extendedProps.type === 'lesson')
         .sort((a, b) => a.start - b.start);
 
-    // Підрахунок статистики
-    const stats = {};
-    const rows = events.map(e => {
+    // Змінні для підрахунку
+    const statsByMonth = {};
+    const statsByTeacher = {};
+    let rows = '';
+
+    events.forEach(e => {
         const count = parseInt(e.extendedProps.count) || 1;
+        const teacher = e.extendedProps.teacher || 'Невідомий';
+        const status = e.extendedProps.status || '🟢 Все за планом';
+
+        // 1. Підрахунок по місяцях (як у вас і було)
         let mKey = e.start.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
         mKey = mKey.charAt(0).toUpperCase() + mKey.slice(1);
-        
-        if (!stats[mKey]) stats[mKey] = 0;
-        stats[mKey] += count;
+        if (!statsByMonth[mKey]) statsByMonth[mKey] = 0;
+        statsByMonth[mKey] += count;
 
-        return `<tr><td>${e.extendedProps.teacher}</td><td>${e.start.toLocaleDateString()}</td><td>${e.extendedProps.subject}</td><td>${e.extendedProps.className}</td><td>${count}</td><td style="border-bottom:1px solid #000;"></td></tr>`;
-    }).join('');
+        // 2. Підрахунок по вчителях та статусах (Нова фішка)
+        if (!statsByTeacher[teacher]) {
+            statsByTeacher[teacher] = { total: 0, done: 0, late: 0, canceled: 0 };
+        }
+        statsByTeacher[teacher].total += count;
+        if (status.includes('Проведено')) statsByTeacher[teacher].done += count;
+        if (status.includes('Запізнююсь')) statsByTeacher[teacher].late += count;
+        if (status.includes('Скасовано')) statsByTeacher[teacher].canceled += count;
 
-    // HTML Підсумку
-    let summaryHtml = '<h4 style="margin:0 0 10px 0;">📅 Підсумок:</h4><ul style="padding-left:20px; margin:0;">';
-    for (const [m, val] of Object.entries(stats)) {
+        // 3. Формування рядків таблиці
+        rows += `<tr>
+            <td>${teacher}</td>
+            <td>${e.start.toLocaleDateString()}</td>
+            <td>${e.extendedProps.subject}</td>
+            <td>${e.extendedProps.className}</td>
+            <td>${count}</td>
+            <td style="border-bottom:1px solid #000;"></td>
+        </tr>`;
+    });
+
+    // Формуємо базовий HTML (Місяці)
+    let summaryHtml = '<h4 style="margin:0 0 10px 0; color:#1F2937;">📅 Підсумок по місяцях:</h4><ul style="padding-left:20px; margin:0 0 15px 0; color:#4B5563;">';
+    for (const [m, val] of Object.entries(statsByMonth)) {
         summaryHtml += `<li style="margin-bottom:4px;"><b>${m}:</b> ${val} уроків</li>`;
     }
     summaryHtml += '</ul>';
+
+    // Додаємо красиві картки, ТІЛЬКИ якщо це Адмін або Технік
+    if (currentUser && (currentUser.level === 'admin' || currentUser.level === 'tech')) {
+        summaryHtml += `<h4 style="margin:0 0 15px 0; color:#1F2937; border-top: 1px dashed #E5E7EB; padding-top: 15px;">📈 Аналітика по викладачах:</h4>`;
+        summaryHtml += `<div style="display:flex; flex-wrap:wrap; gap:10px;">`;
+        
+        for (let tName in statsByTeacher) {
+            let t = statsByTeacher[tName];
+            summaryHtml += `
+                <div style="background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 15px; min-width: 150px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                    <div style="font-weight: 600; color: #374151; margin-bottom: 8px;">👨‍🏫 ${tName}</div>
+                    <div style="font-size: 0.85em; color: #6B7280; display: flex; flex-direction: column; gap: 4px;">
+                        <span>Всього заплановано: <b>${t.total}</b></span>
+                        <span style="color: #10B981;">✅ Проведено: <b>${t.done}</b></span>
+                        ${t.late > 0 ? `<span style="color: #F59E0B;">🏃 Запізнення: <b>${t.late}</b></span>` : ''}
+                        ${t.canceled > 0 ? `<span style="color: #EF4444;">❌ Скасовано: <b>${t.canceled}</b></span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        summaryHtml += `</div>`;
+    }
 
     document.getElementById('reportSummary').innerHTML = summaryHtml;
     document.getElementById('reportTableBody').innerHTML = rows;
