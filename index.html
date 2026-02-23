@@ -199,14 +199,14 @@
         <div class="modal-header"><h3>Керування</h3><button class="btn-logout" onclick="closeStatusModal()">✕</button></div>
         <div class="modal-body">
             <h4 id="statusEventTitle"></h4>
-            <select id="eventStatus" style="width:100%; padding:10px; margin-top:10px;">
-                <option value="">🟢 Все за планом</option>
+            <select id="statusSelect" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #D1D5DB;">
+                <option value="🟢 Все за планом">🟢 Все за планом</option>
                 <option value="✅ Проведено">✅ Проведено</option>
                 <option value="🏃 Запізнююсь (10 хв)">🏃 Запізнююсь (10 хв)</option>
                 <option value="❌ Скасовано">❌ Скасовано</option>
             </select>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer">  
             <button class="btn btn-primary" onclick="applyStatus()">Оновити</button>
             <button id="btnDeleteEvent" class="btn btn-danger" onclick="handleDelete()">Видалити</button>
         </div>

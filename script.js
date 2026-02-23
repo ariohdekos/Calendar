@@ -262,39 +262,41 @@ window.confirmBooking = () => {
 
 // --- ФУНКЦІЯ ОНОВЛЕННЯ СТАТУСУ ---
 window.applyStatus = () => {
-    if (!clickedEvent) return; // Перевіряємо, чи обрано урок
+    if (!clickedEvent) return;
 
-    // Беремо новий статус із випадаючого списку
-    const newStatus = document.getElementById('statusSelect').value;
-    const eventId = clickedEvent.id; // Беремо унікальний ID уроку
+    const statusSelect = document.getElementById('statusSelect');
+    if (!statusSelect) return;
 
-    // 1. ВІДПРАВЛЯЄМО ДАНІ В БАЗУ FIREBASE
+    const newStatus = statusSelect.value;
+    const eventId = clickedEvent.id || (clickedEvent.extendedProps && clickedEvent.extendedProps.id);
+
+    if (!eventId) return;
+
+    // Відправляємо в базу
     db.ref('events/' + eventId).update({
         status: newStatus
     }).then(() => {
-        // 2. Якщо Firebase успішно зберіг, оновлюємо урок у календарі
+        // Оновлюємо статус у календарі
         clickedEvent.setExtendedProp('status', newStatus);
         
-        // Закриваємо вікно керування (перевірте, чи ваше вікно має такий ID)
-        document.getElementById('manageOverlay').style.display = 'none';
+        // Закриваємо вікно
+        const manageOverlay = document.getElementById('manageOverlay');
+        if (manageOverlay) manageOverlay.style.display = 'none';
         
-        // Показуємо красиве зелене сповіщення
+        // Показуємо зелене сповіщення
         Swal.fire({
             toast: true,
             position: 'top-end',
             icon: 'success',
-            title: 'Статус успішно збережено!',
+            title: `Статус оновлено!`,
             showConfirmButton: false,
             timer: 1500
         });
     }).catch(error => {
-        // Якщо сталася помилка з інтернетом або базою
-        console.error("Помилка оновлення:", error);
         Swal.fire({
             icon: 'error',
-            title: 'Помилка',
-            text: 'Не вдалося зберегти статус у базу даних.',
-            confirmButtonColor: '#4F46E5'
+            title: 'Помилка бази даних',
+            text: error.message
         });
     });
 };
