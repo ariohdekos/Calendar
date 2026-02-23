@@ -555,7 +555,7 @@ db.ref('events').on('value', snap => {
             calendar.addEvent(ev);
         });
     });
-
+}
 function sendTG(msg) {
     if (tgConfig && tgConfig.token && tgConfig.chatId) {
         fetch(`https://api.telegram.org/bot${tgConfig.token}/sendMessage?chat_id=${tgConfig.chatId}&text=${encodeURIComponent(msg)}`);
