@@ -276,9 +276,38 @@ window.applyStatus = () => {
     db.ref('events/' + eventId).update({
         status: newStatus
     }).then(() => {
-        // Оновлюємо статус у календарі
+        // 1. Оновлюємо статус у пам'яті календаря
         clickedEvent.setExtendedProp('status', newStatus);
         
+        // 2. ВІЗУАЛЬНІ ЗМІНИ (Змінюємо колір блоку в залежності від статусу)
+        let newColor = clickedEvent.backgroundColor; // залишаємо старий колір за замовчуванням
+        if (newStatus.includes('Проведено')) newColor = '#10B981'; // Зелений
+        if (newStatus.includes('Запізнююсь')) newColor = '#F59E0B'; // Помаранчевий
+        if (newStatus.includes('Скасовано')) newColor = '#EF4444'; // Червоний
+        if (newStatus.includes('Все за планом')) newColor = '#3B82F6'; // Синій (або ваш стандартний)
+
+        clickedEvent.setProp('backgroundColor', newColor);
+        clickedEvent.setProp('borderColor', newColor);
+
+        // 3. ВІДПРАВКА В TELEGRAM-БОТ
+        // Беремо налаштування бота з глобальної змінної tgConfig (яку ви налаштували)
+        if (typeof tgConfig !== 'undefined' && tgConfig && tgConfig.token && tgConfig.chatId) {
+            const t = clickedEvent.extendedProps.teacher || 'Невідомий';
+            const s = clickedEvent.extendedProps.subject || '';
+            const c = clickedEvent.extendedProps.className || '';
+            
+            const tgMessage = `🔔 ЗМІНА СТАТУСУ УРОКУ\n\n👨‍🏫 Вчитель: ${t}\n📚 Предмет: ${s}\n🎓 Клас: ${c}\n\n🆕 Новий статус: ${newStatus}`;
+            
+            fetch(`https://api.telegram.org/bot${tgConfig.token}/sendMessage`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    chat_id: tgConfig.chatId,
+                    text: tgMessage
+                })
+            }).catch(e => console.error("Помилка відправки в TG:", e));
+        }
+
         // Закриваємо вікно
         const manageOverlay = document.getElementById('manageOverlay');
         if (manageOverlay) manageOverlay.style.display = 'none';
