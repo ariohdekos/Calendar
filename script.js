@@ -260,23 +260,41 @@ window.confirmBooking = () => {
     });
 };
 
+// --- ФУНКЦІЯ ОНОВЛЕННЯ СТАТУСУ ---
 window.applyStatus = () => {
-    const newStatus = document.getElementById('eventStatusSelect').value;
-    
-    // Включаем спиннер
-    Swal.fire({
-        title: 'Оновлення статусу...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    if (!clickedEvent) return; // Перевіряємо, чи обрано урок
 
-    db.ref('events/' + clickedEvent.id + '/extendedProps/status').set(newStatus).then(() => {
-        closeStatusModal();
+    // Беремо новий статус із випадаючого списку
+    const newStatus = document.getElementById('statusSelect').value;
+    const eventId = clickedEvent.id; // Беремо унікальний ID уроку
+
+    // 1. ВІДПРАВЛЯЄМО ДАНІ В БАЗУ FIREBASE
+    db.ref('events/' + eventId).update({
+        status: newStatus
+    }).then(() => {
+        // 2. Якщо Firebase успішно зберіг, оновлюємо урок у календарі
+        clickedEvent.setExtendedProp('status', newStatus);
+        
+        // Закриваємо вікно керування (перевірте, чи ваше вікно має такий ID)
+        document.getElementById('manageOverlay').style.display = 'none';
+        
+        // Показуємо красиве зелене сповіщення
         Swal.fire({
-            title: 'Статус оновлено!',
+            toast: true,
+            position: 'top-end',
             icon: 'success',
-            timer: 1500,
-            showConfirmButton: false
+            title: 'Статус успішно збережено!',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    }).catch(error => {
+        // Якщо сталася помилка з інтернетом або базою
+        console.error("Помилка оновлення:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Помилка',
+            text: 'Не вдалося зберегти статус у базу даних.',
+            confirmButtonColor: '#4F46E5'
         });
     });
 };
