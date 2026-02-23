@@ -525,15 +525,36 @@ function loadData() {
         document.getElementById('filterList').innerHTML = list.map(t => `<div class="filter-item" onclick="toggleFilter('${t}')">${t}</div>`).join('');
     });
 
-    db.ref('events').on('value', snap => {
+db.ref('events').on('value', snap => {
         calendar.removeAllEvents();
         const data = snap.val();
         if (data) Object.values(data).forEach(ev => {
-            if(ev.extendedProps.status) ev.title = `${ev.extendedProps.status} | ${ev.title}`;
+            
+            // 1. Змінюємо заголовок (ваша існуюча логіка)
+            if(ev.extendedProps && ev.extendedProps.status) {
+                // Щоб статуси не дублювалися в назві при оновленні, беремо чисту назву
+                let cleanTitle = ev.title.replace(/^(🟢|✅|🏃|❌).*?\|\s*/, '');
+                ev.title = `${ev.extendedProps.status} | ${cleanTitle}`;
+            }
+
+            // 2. ДОДАЄМО ЛОГІКУ КОЛЬОРІВ
+            let finalColor = ev.backgroundColor || '#3B82F6'; // Беремо поточний або стандартний
+            
+            if (ev.extendedProps && ev.extendedProps.status) {
+                const status = ev.extendedProps.status;
+                if (status.includes('Проведено')) finalColor = '#10B981'; // Зелений
+                if (status.includes('Запізнююсь')) finalColor = '#F59E0B'; // Помаранчевий
+                if (status.includes('Скасовано')) finalColor = '#EF4444'; // Червоний
+            }
+            
+            // Застосовуємо правильний колір
+            ev.backgroundColor = finalColor;
+            ev.borderColor = finalColor;
+
+            // 3. Додаємо в календар
             calendar.addEvent(ev);
         });
     });
-}
 
 function sendTG(msg) {
     if (tgConfig && tgConfig.token && tgConfig.chatId) {
