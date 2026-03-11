@@ -23,16 +23,21 @@ let currentUser = null;
 let calendar = null;
 let selectedSlot = null;
 let clickedEvent = null;
-let tgConfig = null; // Налаштування TG з бази
+let tgConfig = null;
+// БАГ #7 ВИПРАВЛЕНО: окремий прапор, щоб checkAutoLogin не викликався повторно
+let autoLoginChecked = false;
 
 // ==========================================
 // 2. АВТОРИЗАЦІЯ & АВТО-ВХІД
 // ==========================================
 
-// Слухаємо оновлення юзерів
+// БАГ #7 ВИПРАВЛЕНО: checkAutoLogin тепер викликається лише один раз
 db.ref('users').on('value', snap => {
     if (snap.val()) USERS = snap.val();
-    checkAutoLogin(); // Перевіряємо вхід після завантаження бази
+    if (!autoLoginChecked) {
+        autoLoginChecked = true;
+        checkAutoLogin();
+    }
 });
 
 window.tryLogin = () => {
@@ -43,16 +48,16 @@ window.tryLogin = () => {
         startApp();
     } else {
         Swal.fire({
-        icon: 'error',
-        title: 'Помилка!',
-        text: 'Невірний код доступу',
-        confirmButtonColor: '#4F46E5'
-});
+            icon: 'error',
+            title: 'Помилка!',
+            text: 'Невірний код доступу',
+            confirmButtonColor: '#4F46E5'
+        });
     }
 };
 
 function checkAutoLogin() {
-    if (currentUser) return; // Вже ввійшли
+    if (currentUser) return;
     const token = sessionStorage.getItem('st_token');
     if (token && USERS[token]) {
         currentUser = USERS[token];
@@ -68,10 +73,17 @@ window.logout = () => {
 function startApp() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('topBar').style.display = 'flex';
+    // БАГ #3 ВИПРАВЛЕНО: statusBar тепер правильно показується
+    document.getElementById('statusBar').style.display = 'flex';
     document.getElementById('mainApp').style.display = 'grid';
-    
+
     document.getElementById('roleBadge').textContent = currentUser.role;
     document.getElementById('roleBadge').style.background = currentUser.color;
+
+    // БАГ #11 ВИПРАВЛЕНО: statusBar отримує осмислений текст
+    const statusBar = document.getElementById('statusBar');
+    statusBar.textContent = `Ви увійшли як: ${currentUser.role}`;
+    statusBar.style.background = currentUser.color;
 
     // Права доступу
     if (currentUser.level === 'admin' || currentUser.level === 'tech') {
@@ -95,20 +107,27 @@ function initCalendar() {
         locale: 'uk', slotMinTime: '08:00:00', slotMaxTime: '21:00:00',
         selectable: true,
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' },
-        
+
         select: (info) => {
             selectedSlot = info;
-            document.getElementById('startTime').value = info.startStr.split('T')[1].substring(0,5);
-            document.getElementById('endTime').value = info.endStr.split('T')[1].substring(0,5);
+            document.getElementById('startTime').value = info.startStr.split('T')[1].substring(0, 5);
+            document.getElementById('endTime').value = info.endStr.split('T')[1].substring(0, 5);
+            // БАГ #12 ВИПРАВЛЕНО: скидаємо чекбокс при відкритті модалки
+            document.getElementById('isTechBreak').checked = false;
+            document.getElementById('bookingFields').style.opacity = '1';
             document.getElementById('modalOverlay').style.display = 'flex';
         },
-        
+
         eventClick: (info) => {
             clickedEvent = info.event;
             const props = info.event.extendedProps;
             document.getElementById('statusModalOverlay').style.display = 'flex';
             document.getElementById('statusEventTitle').textContent = info.event.title;
-            
+
+            // Встановлюємо поточний статус у select
+            const currentStatus = props.status || '🟢 Все за планом';
+            document.getElementById('statusSelect').value = currentStatus;
+
             // Логіка видалення (15 хв)
             const isAuthor = props.creator === sessionStorage.getItem('st_token');
             const diffMin = (Date.now() - props.createdAt) / 60000;
@@ -117,18 +136,16 @@ function initCalendar() {
         }
     });
     calendar.render();
-    
+
     loadDynamicLists();
-     initSettingsUI();
+    initSettingsUI();
 }
+
 function loadDynamicLists() {
-    // 1. Завантаження предметів
     db.ref('settings/subjects').on('value', snap => {
-        // Якщо в базі ще нічого немає, даємо базовий масив
-        const subjects = snap.val() || ["Математика", "Українська мова", "Англійська мова", "Історія України"]; 
+        const subjects = snap.val() || ["Математика", "Українська мова", "Англійська мова", "Історія України"];
         const list = document.getElementById('subjectsList');
-        list.innerHTML = ''; // Очищаємо перед оновленням
-        
+        list.innerHTML = '';
         subjects.forEach(subj => {
             let option = document.createElement('option');
             option.value = subj;
@@ -136,13 +153,10 @@ function loadDynamicLists() {
         });
     });
 
-    // 2. Завантаження класів
     db.ref('settings/classes').on('value', snap => {
-        // Базовий масив класів, якщо в базі пусто
-        const classes = snap.val() || ["10-А", "10-Б", "11-А", "11-Б", "11-В"]; 
+        const classes = snap.val() || ["10-А", "10-Б", "11-А", "11-Б", "11-В"];
         const list = document.getElementById('classesList');
-        list.innerHTML = ''; 
-        
+        list.innerHTML = '';
         classes.forEach(cls => {
             let option = document.createElement('option');
             option.value = cls;
@@ -150,23 +164,22 @@ function loadDynamicLists() {
         });
     });
 }
+
 // ==========================================
 // 4. ОПЕРАЦІЇ З ДАНИМИ
 // ==========================================
 window.confirmBooking = () => {
-    // Отримуємо час з форми
     const startTimeVal = document.getElementById('startTime').value;
     const endTimeVal = document.getElementById('endTime').value;
 
-    // --- ДОДАНО: 1. Валідація правильного часу ---
     if (startTimeVal >= endTimeVal) {
         Swal.fire({
-        icon: 'warning',
-        title: 'Некоректний час',
-        text: 'Час завершення уроку має бути пізніше за час його початку!',
-        confirmButtonColor: '#4F46E5'
-    });
-        return; // Зупиняємо збереження
+            icon: 'warning',
+            title: 'Некоректний час',
+            text: 'Час завершення уроку має бути пізніше за час його початку!',
+            confirmButtonColor: '#4F46E5'
+        });
+        return;
     }
 
     const isBreak = document.getElementById('isTechBreak').checked;
@@ -175,92 +188,94 @@ window.confirmBooking = () => {
     const start = datePart + 'T' + startTimeVal + ':00';
     const end = datePart + 'T' + endTimeVal + ':00';
 
-// --- ДОДАНО: 2. Валідація накладок (Овербукінг) ---
-    if (!isBreak) { 
+    if (!isBreak) {
         const teacherName = document.getElementById('eventTeacher').value;
         const availabilityStatus = checkSlotAvailability(teacherName, start, end);
-        
+
         if (availabilityStatus === "tech_break") {
             Swal.fire({
-        icon: 'error',
-        title: 'Технічна перерва',
-        text: 'Запис неможливий: на цей час студія зачинена!',
-        confirmButtonColor: '#4F46E5'
-        });
-            return; // Зупиняємо збереження
+                icon: 'error',
+                title: 'Технічна перерва',
+                text: 'Запис неможливий: на цей час студія зачинена!',
+                confirmButtonColor: '#4F46E5'
+            });
+            return;
         } else if (availabilityStatus === "teacher_busy") {
-           Swal.fire({
-            icon: 'error',
-            title: 'Накладка в розкладі',
-            text: `У викладача ${teacherName} вже є заняття у цей часовий проміжок.`,
-            confirmButtonColor: '#4F46E5'
-        });
-            return; // Зупиняємо збереження
+            Swal.fire({
+                icon: 'error',
+                title: 'Накладка в розкладі',
+                text: `У викладача ${teacherName} вже є заняття у цей часовий проміжок.`,
+                confirmButtonColor: '#4F46E5'
+            });
+            return;
         }
     }
 
-    // Далі йде ваш стандартний код формування даних...
+    // БАГ #4 & #5 ВИПРАВЛЕНО: id передається на верхній рівень для FullCalendar
     let data = {
-        id, start, end,
-        extendedProps: { createdAt: Date.now(), creator: sessionStorage.getItem('st_token') }
+        id,  // FullCalendar зчитує id саме звідси
+        start, end,
+        extendedProps: {
+            id,  // дублюємо для зручності читання з props
+            createdAt: Date.now(),
+            creator: sessionStorage.getItem('st_token')
+        }
     };
 
     if (isBreak) {
         data.title = "⛔ ТЕХНІЧНА ПЕРЕРВА";
         data.backgroundColor = "#6B7280";
+        data.borderColor = "#6B7280";
         data.extendedProps.type = "tech";
     } else {
         const subj = document.getElementById('eventSubject').value;
         const cls = document.getElementById('eventClass').value;
         if (!subj || !cls) {
-        Swal.fire({
-            icon: 'info',
-            title: 'Увага',
-            text: 'Будь ласка, заповніть предмет та клас!',
-            confirmButtonColor: '#4F46E5'
-        });
-        return;
-    }
-        
+            Swal.fire({
+                icon: 'info',
+                title: 'Увага',
+                text: 'Будь ласка, заповніть предмет та клас!',
+                confirmButtonColor: '#4F46E5'
+            });
+            return;
+        }
+
+        const color = document.getElementById('eventColor').value;
         data.title = `${subj} (${cls})`;
-        data.backgroundColor = document.getElementById('eventColor').value;
+        data.backgroundColor = color;
+        data.borderColor = color;
         data.extendedProps = {
             ...data.extendedProps,
-            teacher: document.getElementById('eventTeacher').value, // Тут ми беремо вчителя
-            subject: subj, className: cls,
+            teacher: document.getElementById('eventTeacher').value,
+            subject: subj,
+            className: cls,
             count: document.getElementById('eventCount').value,
             type: "lesson"
         };
     }
 
-// Показываем спиннер перед отправкой в базу
     Swal.fire({
         title: 'Збереження...',
         allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+        didOpen: () => { Swal.showLoading(); }
     });
 
-    // Отправляем данные
     db.ref('events/' + id).set(data).then(() => {
-        sendTG(`🆕 Запис: ${data.title}\n📅 ${start.replace('T',' ')}`);
+        sendTG(`🆕 Запис: ${data.title}\n📅 ${start.replace('T', ' ')}`);
+        // БАГ #13 ВИПРАВЛЕНО: очищаємо selectedSlot після збереження
+        selectedSlot = null;
         closeModal();
-        
-        // Показываем сообщение об успехе, которое само исчезнет через 1.5 секунды
         Swal.fire({
             icon: 'success',
             title: 'Збережено!',
             showConfirmButton: false,
             timer: 1500
         });
-    }).catch((error) => {
-        // На случай ошибки интернета
+    }).catch(() => {
         Swal.fire('Помилка', 'Не вдалося зберегти дані', 'error');
     });
 };
 
-// --- ФУНКЦІЯ ОНОВЛЕННЯ СТАТУСУ ---
 window.applyStatus = () => {
     if (!clickedEvent) return;
 
@@ -268,51 +283,41 @@ window.applyStatus = () => {
     if (!statusSelect) return;
 
     const newStatus = statusSelect.value;
-    const eventId = clickedEvent.id || (clickedEvent.extendedProps && clickedEvent.extendedProps.id);
+    // БАГ #4 ВИПРАВЛЕНО: отримуємо id з extendedProps якщо потрібно
+    const eventId = clickedEvent.id || clickedEvent.extendedProps.id;
 
-    if (!eventId) return;
+    if (!eventId) {
+        Swal.fire('Помилка', 'Не вдалося визначити ID події', 'error');
+        return;
+    }
 
-    // Відправляємо в базу
-    db.ref('events/' + eventId).update({
-        status: newStatus
-    }).then(() => {
-        // 1. Оновлюємо статус у пам'яті календаря
+    db.ref('events/' + eventId).update({ status: newStatus }).then(() => {
         clickedEvent.setExtendedProp('status', newStatus);
-        
-        // 2. ВІЗУАЛЬНІ ЗМІНИ (Змінюємо колір блоку в залежності від статусу)
-        let newColor = clickedEvent.backgroundColor; // залишаємо старий колір за замовчуванням
-        if (newStatus.includes('Проведено')) newColor = '#10B981'; // Зелений
-        if (newStatus.includes('Запізнююсь')) newColor = '#F59E0B'; // Помаранчевий
-        if (newStatus.includes('Скасовано')) newColor = '#EF4444'; // Червоний
-        if (newStatus.includes('Все за планом')) newColor = '#3B82F6'; // Синій (або ваш стандартний)
+
+        let newColor = clickedEvent.extendedProps.originalColor || clickedEvent.backgroundColor;
+        if (newStatus.includes('Проведено')) newColor = '#10B981';
+        if (newStatus.includes('Запізнююсь')) newColor = '#F59E0B';
+        if (newStatus.includes('Скасовано')) newColor = '#EF4444';
+        if (newStatus.includes('Все за планом')) newColor = clickedEvent.extendedProps.originalColor || '#4F46E5';
 
         clickedEvent.setProp('backgroundColor', newColor);
         clickedEvent.setProp('borderColor', newColor);
 
-        // 3. ВІДПРАВКА В TELEGRAM-БОТ
-        // Беремо налаштування бота з глобальної змінної tgConfig (яку ви налаштували)
-        if (typeof tgConfig !== 'undefined' && tgConfig && tgConfig.token && tgConfig.chatId) {
+        if (tgConfig && tgConfig.token && tgConfig.chatId) {
             const t = clickedEvent.extendedProps.teacher || 'Невідомий';
             const s = clickedEvent.extendedProps.subject || '';
             const c = clickedEvent.extendedProps.className || '';
-            
             const tgMessage = `🔔 ЗМІНА СТАТУСУ УРОКУ\n\n👨‍🏫 Вчитель: ${t}\n📚 Предмет: ${s}\n🎓 Клас: ${c}\n\n🆕 Новий статус: ${newStatus}`;
-            
             fetch(`https://api.telegram.org/bot${tgConfig.token}/sendMessage`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    chat_id: tgConfig.chatId,
-                    text: tgMessage
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: tgConfig.chatId, text: tgMessage })
             }).catch(e => console.error("Помилка відправки в TG:", e));
         }
 
-        // Закриваємо вікно
-        const manageOverlay = document.getElementById('manageOverlay');
-        if (manageOverlay) manageOverlay.style.display = 'none';
-        
-        // Показуємо зелене сповіщення
+        // БАГ #2 ВИПРАВЛЕНО: закриваємо правильний оверлей
+        closeStatusModal();
+
         Swal.fire({
             toast: true,
             position: 'top-end',
@@ -322,13 +327,10 @@ window.applyStatus = () => {
             timer: 1500
         });
     }).catch(error => {
-        Swal.fire({
-            icon: 'error',
-            title: 'Помилка бази даних',
-            text: error.message
-        });
+        Swal.fire({ icon: 'error', title: 'Помилка бази даних', text: error.message });
     });
 };
+
 window.handleDelete = () => {
     Swal.fire({
         title: 'Ви впевнені?',
@@ -341,19 +343,17 @@ window.handleDelete = () => {
         cancelButtonText: 'Скасувати'
     }).then((result) => {
         if (result.isConfirmed) {
-            // Запускаем спиннер
             Swal.fire({
                 title: 'Видалення...',
                 allowOutsideClick: false,
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            // Удаляем из Firebase
-            db.ref('events/' + clickedEvent.id).remove().then(() => {
+            // БАГ #4 ВИПРАВЛЕНО: отримуємо id з двох місць
+            const eventId = clickedEvent.id || clickedEvent.extendedProps.id;
+            db.ref('events/' + eventId).remove().then(() => {
                 sendTG(`🗑 Видалено: ${clickedEvent.title}`);
                 closeStatusModal();
-                
-                // Успешное удаление
                 Swal.fire({
                     title: 'Видалено!',
                     icon: 'success',
@@ -366,7 +366,7 @@ window.handleDelete = () => {
 };
 
 // ==========================================
-// 5. НАЛАШТУВАННЯ (Збереження в Хмару)
+// 5. НАЛАШТУВАННЯ
 // ==========================================
 window.openSettings = () => {
     if (tgConfig) {
@@ -379,69 +379,91 @@ window.openSettings = () => {
 window.closeSettings = () => document.getElementById('settingsModal').style.display = 'none';
 
 window.saveSettings = () => {
-    console.log("Починаємо збереження..."); // Перевірка, чи кнопка працює
-    
     const tokenElem = document.getElementById('tgToken');
     const chatElem = document.getElementById('tgChatId');
 
     if (!tokenElem || !chatElem) {
-        return alert("Помилка: Не знайдено поля введення в HTML!");
+        return Swal.fire('Помилка', 'Не знайдено поля введення в HTML!', 'error');
     }
 
     const token = tokenElem.value.trim();
     const chat = chatElem.value.trim();
-    
-    console.log("Дані:", token, chat);
 
-    if(!token || !chat) {
-        return alert("⚠️ Будь ласка, заповніть обидва поля (Token та Chat ID)!");
+    if (!token || !chat) {
+        return Swal.fire({
+            icon: 'warning',
+            title: 'Увага',
+            text: 'Будь ласка, заповніть обидва поля (Token та Chat ID)!',
+            confirmButtonColor: '#4F46E5'
+        });
     }
-    
-    // Спробуємо записати
-    db.ref('settings_tg').set({
-        token: token,
-        chatId: chat
-    })
-    .then(() => {
-        console.log("Успіх!");
-        alert("✅ Налаштування успішно збережено в Хмару!");
-        closeSettings();
-    })
-    .catch((error) => {
-        console.error("Помилка Firebase:", error);
-        alert("❌ Помилка запису в базу:\n" + error.message + "\n\nПеревірте вкладку 'Rules' у Firebase!");
-    });
+
+    db.ref('settings_tg').set({ token, chatId: chat })
+        .then(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Збережено!',
+                text: 'Налаштування успішно збережено в хмару.',
+                confirmButtonColor: '#4F46E5'
+            });
+            closeSettings();
+        })
+        .catch((error) => {
+            Swal.fire('Помилка Firebase', error.message, 'error');
+        });
 };
 
-window.updatePassInDB = () => {
-    const newCode = document.getElementById('newPassCode').value.trim();
-    const roleKey = document.getElementById('passRoleSelector').value;
-    if (newCode.length < 3) return alert("Мінімум 3 цифри!");
+// БАГ #1 & #8 ВИПРАВЛЕНО: функція changePassword тепер існує і правильно названа
+window.changePassword = () => {
+    const newCode = document.getElementById('newPassInput').value.trim();
+    const roleValue = document.getElementById('roleSelect').value;
 
-    let tempUsers = { ...USERS };
-    for (let c in tempUsers) { if (tempUsers[c].level === roleKey) delete tempUsers[c]; }
-    
-    const roles = {
-        "tech": { role: "Технік", level: "tech", color: "#6B7280" },
-        "admin": { role: "Адмін", level: "admin", color: "#4F46E5" },
-        "teacher": { role: "Викладач", level: "teacher", color: "#10B981" }
+    if (newCode.length < 3) {
+        return Swal.fire({
+            icon: 'warning',
+            title: 'Занадто короткий код',
+            text: 'Мінімум 3 символи!',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+
+    // Визначаємо роль за числовим значенням із select
+    const roleMap = {
+        "999": { role: "Викладач", level: "teacher", color: "#10B981" },
+        "888": { role: "Адмін", level: "admin", color: "#4F46E5" },
+        "777": { role: "Технік", level: "tech", color: "#6B7280" }
     };
-    tempUsers[newCode] = roles[roleKey];
+    const selectedRole = roleMap[roleValue];
+    if (!selectedRole) return;
+
+    // Видаляємо старий код для цієї ролі, додаємо новий
+    let tempUsers = { ...USERS };
+    for (let c in tempUsers) {
+        if (tempUsers[c].level === selectedRole.level) delete tempUsers[c];
+    }
+    tempUsers[newCode] = selectedRole;
+
     db.ref('users').set(tempUsers).then(() => {
-        alert("Пароль оновлено!");
-        document.getElementById('newPassCode').value = '';
+        document.getElementById('newPassInput').value = '';
+        Swal.fire({
+            icon: 'success',
+            title: 'Пароль оновлено!',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    }).catch(error => {
+        Swal.fire('Помилка', error.message, 'error');
     });
 };
 
 // ==========================================
-// 6. ЗВІТНІСТЬ (З ПІДРАХУНКОМ ПО МІСЯЦЯХ)
+// 6. ЗВІТНІСТЬ
 // ==========================================
 window.openReport = () => {
     const events = calendar.getEvents()
         .filter(e => e.extendedProps.type === 'lesson')
         .sort((a, b) => a.start - b.start);
 
-    // Змінні для підрахунку
     const statsByMonth = {};
     const statsByTeacher = {};
     let rows = '';
@@ -451,13 +473,11 @@ window.openReport = () => {
         const teacher = e.extendedProps.teacher || 'Невідомий';
         const status = e.extendedProps.status || '🟢 Все за планом';
 
-        // 1. Підрахунок по місяцях (як у вас і було)
         let mKey = e.start.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
         mKey = mKey.charAt(0).toUpperCase() + mKey.slice(1);
         if (!statsByMonth[mKey]) statsByMonth[mKey] = 0;
         statsByMonth[mKey] += count;
 
-        // 2. Підрахунок по вчителях та статусах (Нова фішка)
         if (!statsByTeacher[teacher]) {
             statsByTeacher[teacher] = { total: 0, done: 0, late: 0, canceled: 0 };
         }
@@ -466,7 +486,6 @@ window.openReport = () => {
         if (status.includes('Запізнююсь')) statsByTeacher[teacher].late += count;
         if (status.includes('Скасовано')) statsByTeacher[teacher].canceled += count;
 
-        // 3. Формування рядків таблиці
         rows += `<tr>
             <td>${teacher}</td>
             <td>${e.start.toLocaleDateString()}</td>
@@ -477,18 +496,15 @@ window.openReport = () => {
         </tr>`;
     });
 
-    // Формуємо базовий HTML (Місяці)
     let summaryHtml = '<h4 style="margin:0 0 10px 0; color:#1F2937;">📅 Підсумок по місяцях:</h4><ul style="padding-left:20px; margin:0 0 15px 0; color:#4B5563;">';
     for (const [m, val] of Object.entries(statsByMonth)) {
         summaryHtml += `<li style="margin-bottom:4px;"><b>${m}:</b> ${val} уроків</li>`;
     }
     summaryHtml += '</ul>';
 
-    // Додаємо красиві картки, ТІЛЬКИ якщо це Адмін або Технік
     if (currentUser && (currentUser.level === 'admin' || currentUser.level === 'tech')) {
         summaryHtml += `<h4 style="margin:0 0 15px 0; color:#1F2937; border-top: 1px dashed #E5E7EB; padding-top: 15px;">📈 Аналітика по викладачах:</h4>`;
         summaryHtml += `<div style="display:flex; flex-wrap:wrap; gap:10px;">`;
-        
         for (let tName in statsByTeacher) {
             let t = statsByTeacher[tName];
             summaryHtml += `
@@ -500,8 +516,7 @@ window.openReport = () => {
                         ${t.late > 0 ? `<span style="color: #F59E0B;">🏃 Запізнення: <b>${t.late}</b></span>` : ''}
                         ${t.canceled > 0 ? `<span style="color: #EF4444;">❌ Скасовано: <b>${t.canceled}</b></span>` : ''}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
         summaryHtml += `</div>`;
     }
@@ -514,7 +529,7 @@ window.openReport = () => {
 window.closeReport = () => document.getElementById('reportOverlay').style.display = 'none';
 
 // ==========================================
-// 7. ДОПОМІЖНІ
+// 7. ЗАВАНТАЖЕННЯ ДАНИХ
 // ==========================================
 function loadData() {
     db.ref('settings_tg').on('value', snap => { tgConfig = snap.val(); });
@@ -525,151 +540,149 @@ function loadData() {
         document.getElementById('filterList').innerHTML = list.map(t => `<div class="filter-item" onclick="toggleFilter('${t}')">${t}</div>`).join('');
     });
 
-db.ref('events').on('value', snap => {
+    db.ref('events').on('value', snap => {
         calendar.removeAllEvents();
         const data = snap.val();
         if (data) Object.values(data).forEach(ev => {
-            
-            // 1. Змінюємо заголовок (ваша існуюча логіка)
-            if(ev.extendedProps && ev.extendedProps.status) {
-                // Щоб статуси не дублювалися в назві при оновленні, беремо чисту назву
-                let cleanTitle = ev.title.replace(/^(🟢|✅|🏃|❌).*?\|\s*/, '');
-                ev.title = `${ev.extendedProps.status} | ${cleanTitle}`;
-            }
 
-            // 2. ДОДАЄМО ЛОГІКУ КОЛЬОРІВ
-            let finalColor = ev.backgroundColor || '#3B82F6'; // Беремо поточний або стандартний
-            
+            // БАГ #6 ВИПРАВЛЕНО: статус впливає лише на колір, не мутує title в пам'яті
+            let finalColor = ev.backgroundColor || '#3B82F6';
+
             if (ev.extendedProps && ev.extendedProps.status) {
                 const status = ev.extendedProps.status;
-                if (status.includes('Проведено')) finalColor = '#10B981'; // Зелений
-                if (status.includes('Запізнююсь')) finalColor = '#F59E0B'; // Помаранчевий
-                if (status.includes('Скасовано')) finalColor = '#EF4444'; // Червоний
+                if (status.includes('Проведено')) finalColor = '#10B981';
+                if (status.includes('Запізнююсь')) finalColor = '#F59E0B';
+                if (status.includes('Скасовано')) finalColor = '#EF4444';
             }
-            
-            // Застосовуємо правильний колір
+
             ev.backgroundColor = finalColor;
             ev.borderColor = finalColor;
 
-            // 3. Додаємо в календар
+            // Зберігаємо оригінальний колір для скидання статусу
+            if (!ev.extendedProps) ev.extendedProps = {};
+            ev.extendedProps.originalColor = ev.backgroundColor;
+
             calendar.addEvent(ev);
         });
     });
 }
+
 function sendTG(msg) {
     if (tgConfig && tgConfig.token && tgConfig.chatId) {
         fetch(`https://api.telegram.org/bot${tgConfig.token}/sendMessage?chat_id=${tgConfig.chatId}&text=${encodeURIComponent(msg)}`);
     }
 }
 
+// БАГ #9 ВИПРАВЛЕНО: фільтр зберігає стан і застосовується після оновлення
+let activeFilter = null;
+
 window.toggleFilter = (t) => {
-    calendar.getEvents().forEach(e => {
-        if(e.extendedProps.type === 'tech') return;
-        e.setProp('display', (e.extendedProps.teacher === t) ? 'auto' : 'none');
+    activeFilter = t;
+    applyActiveFilter();
+    // Позначаємо активний елемент
+    document.querySelectorAll('.filter-item').forEach(el => {
+        el.classList.toggle('active', el.textContent === t);
     });
 };
-window.resetFilters = () => calendar.getEvents().forEach(e => e.setProp('display', 'auto'));
 
-window.closeModal = () => document.getElementById('modalOverlay').style.display = 'none';
-window.closeStatusModal = () => document.getElementById('statusModalOverlay').style.display = 'none';
+window.resetFilters = () => {
+    activeFilter = null;
+    calendar.getEvents().forEach(e => e.setProp('display', 'auto'));
+    document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+};
+
+function applyActiveFilter() {
+    if (!activeFilter) return;
+    calendar.getEvents().forEach(e => {
+        if (e.extendedProps.type === 'tech') return;
+        e.setProp('display', (e.extendedProps.teacher === activeFilter) ? 'auto' : 'none');
+    });
+}
+
+window.closeModal = () => {
+    document.getElementById('modalOverlay').style.display = 'none';
+    // БАГ #13 ВИПРАВЛЕНО: очищаємо selectedSlot при закритті
+    selectedSlot = null;
+};
+
+window.closeStatusModal = () => {
+    document.getElementById('statusModalOverlay').style.display = 'none';
+    clickedEvent = null;
+};
+
 window.toggleTechBreak = (v) => document.getElementById('bookingFields').style.opacity = v ? '0.2' : '1';
+
 window.toggleSidebar = () => {
     const s = document.querySelector('.sidebar');
     s.style.display = (getComputedStyle(s).display === 'none') ? 'block' : 'none';
 };
 
-// Перевірка, чи вільний час (враховує і викладачів, і технічні перерви)
 function checkSlotAvailability(teacherName, newStart, newEnd) {
-    const events = calendar.getEvents(); 
+    const events = calendar.getEvents();
     const startTimestamp = new Date(newStart).getTime();
     const endTimestamp = new Date(newEnd).getTime();
 
     for (let ev of events) {
         const evStart = ev.start.getTime();
-        const evEnd = ev.end.getTime();
+        const evEnd = ev.end ? ev.end.getTime() : evStart;
 
-        // Перевіряємо, чи перетинається час
         if (startTimestamp < evEnd && endTimestamp > evStart) {
-            if (ev.extendedProps.type === 'tech') {
-                return "tech_break"; // Знайдено технічну перерву
-            }
-            if (ev.extendedProps.type === 'lesson' && ev.extendedProps.teacher === teacherName) {
-                return "teacher_busy"; // Цей викладач вже зайнятий
-            }
+            if (ev.extendedProps.type === 'tech') return "tech_break";
+            if (ev.extendedProps.type === 'lesson' && ev.extendedProps.teacher === teacherName) return "teacher_busy";
         }
     }
-    return "available"; // Час вільний
+    return "available";
 }
-// --- КЕРУВАННЯ ПРЕДМЕТАМИ ТА КЛАСАМИ В НАЛАШТУВАННЯХ ---
 
+// ==========================================
+// 8. НАЛАШТУВАННЯ ПРЕДМЕТІВ І КЛАСІВ
+// ==========================================
 function initSettingsUI() {
-    // Показуємо цей блок тільки якщо користувач - Технік (або Адмін)
     if (currentUser && (currentUser.level === 'tech' || currentUser.level === 'admin')) {
         document.getElementById('techSettingsBlock').style.display = 'block';
 
-        // Слухаємо та малюємо список предметів
         db.ref('settings/subjects').on('value', snap => {
             const list = snap.val() || [];
             const ul = document.getElementById('settingsSubjectsList');
             ul.innerHTML = list.map((item, index) => `
-                <li style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #eee;">
-                    ${item} 
-                    <button class="btn btn-danger" style="padding: 2px 6px; font-size: 12px;" onclick="removeSettingItem('subjects', ${index})">❌</button>
-                </li>
-            `).join('');
+                <li>
+                    ${item}
+                    <button class="btn btn-danger" onclick="removeSettingItem('subjects', ${index})">❌</button>
+                </li>`).join('');
         });
 
-        // Слухаємо та малюємо список класів
         db.ref('settings/classes').on('value', snap => {
             const list = snap.val() || [];
             const ul = document.getElementById('settingsClassesList');
             ul.innerHTML = list.map((item, index) => `
-                <li style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #eee;">
-                    ${item} 
-                    <button class="btn btn-danger" style="padding: 2px 6px; font-size: 12px;" onclick="removeSettingItem('classes', ${index})">❌</button>
-                </li>
-            `).join('');
+                <li>
+                    ${item}
+                    <button class="btn btn-danger" onclick="removeSettingItem('classes', ${index})">❌</button>
+                </li>`).join('');
         });
     }
 }
 
-// Функція додавання нового елемента
 window.addSettingItem = (path, inputId) => {
     const input = document.getElementById(inputId);
     const val = input.value.trim();
-    if (!val) return; 
+    if (!val) return;
 
     db.ref(`settings/${path}`).once('value', snap => {
         let list = snap.val() || [];
         if (!list.includes(val)) {
             list.push(val);
             db.ref(`settings/${path}`).set(list).then(() => {
-                input.value = ''; 
-                // Маленьке сповіщення про успіх
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'Додано!',
-                    showConfirmButton: false,
-                    timer: 1500
-                });
+                input.value = '';
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Додано!', showConfirmButton: false, timer: 1500 });
             });
         } else {
-            // Красива помилка замість старого alert
-            Swal.fire({
-                icon: 'error',
-                title: 'Помилка',
-                text: 'Такий запис вже існує!',
-                confirmButtonColor: '#4F46E5'
-            });
+            Swal.fire({ icon: 'error', title: 'Помилка', text: 'Такий запис вже існує!', confirmButtonColor: '#4F46E5' });
         }
     });
 };
 
-// Функція видалення елемента
 window.removeSettingItem = (path, index) => {
-    // Красиве підтвердження замість старого confirm
     Swal.fire({
         title: 'Видалити запис?',
         icon: 'warning',
@@ -682,57 +695,46 @@ window.removeSettingItem = (path, index) => {
         if (result.isConfirmed) {
             db.ref(`settings/${path}`).once('value', snap => {
                 let list = snap.val() || [];
-                list.splice(index, 1); 
-                db.ref(`settings/${path}`).set(list); 
+                list.splice(index, 1);
+                db.ref(`settings/${path}`).set(list);
             });
         }
     });
 };
-// --- ФУНКЦІЯ ЕКСПОРТУ В EXCEL (CSV) ---
+
+// ==========================================
+// 9. ЕКСПОРТ В CSV
+// ==========================================
 window.exportToCSV = () => {
-    // Беремо всі уроки з календаря
     const events = calendar.getEvents()
         .filter(e => e.extendedProps.type === 'lesson')
         .sort((a, b) => a.start - b.start);
 
-    // Додаємо специфічний маркер \uFEFF, щоб Excel зрозумів українську мову (UTF-8)
-    let csvContent = "\uFEFF"; 
-    // Заголовки таблиці (використовуємо крапку з комою, бо Excel в Європі любить її більше)
-    csvContent += "Вчитель;Дата;Час;Предмет;Клас;Статус\n"; 
+    let csvContent = "\uFEFF";
+    // БАГ #10 ВИПРАВЛЕНО: додано колонку "Уроків" в CSV
+    csvContent += "Вчитель;Дата;Час;Предмет;Клас;Уроків;Статус\n";
 
-    // Перебираємо уроки і формуємо рядки
     events.forEach(e => {
         const teacher = e.extendedProps.teacher || 'Невідомий';
         const date = e.start.toLocaleDateString();
-        const time = e.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const time = e.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const subject = e.extendedProps.subject || '';
         const className = e.extendedProps.className || '';
-        // Очищаємо статус від емодзі для чистоти документа (опціонально)
+        // БАГ #10 ВИПРАВЛЕНО: count тепер є в CSV
+        const count = e.extendedProps.count || 1;
         const status = e.extendedProps.status || 'Все за планом';
 
-        const row = `"${teacher}";"${date}";"${time}";"${subject}";"${className}";"${status}"`;
-        csvContent += row + "\n";
+        csvContent += `"${teacher}";"${date}";"${time}";"${subject}";"${className}";"${count}";"${status}"\n`;
     });
 
-    // Створюємо файл і завантажуємо його
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute("href", url);
+    link.setAttribute("href", URL.createObjectURL(blob));
     link.setAttribute("download", `Zvit_Liceum_${new Date().toLocaleDateString()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    // Красиве сповіщення про успіх
-    Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Файл успішно завантажено!',
-        showConfirmButton: false,
-        timer: 2000
-    });
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Файл успішно завантажено!', showConfirmButton: false, timer: 2000 });
 };
