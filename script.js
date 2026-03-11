@@ -141,12 +141,40 @@ function startApp() {
 
         if (currentUser.level === 'admin' || currentUser.level === 'tech') {
             document.getElementById('reportBtn').style.display = 'block';
+            // Bottom nav — показуємо кнопку звіту
+            const bnavReport = document.getElementById('bnav-report');
+            if (bnavReport) bnavReport.style.display = 'flex';
         }
         if (currentUser.level === 'tech') {
             document.getElementById('settingsBtn').style.display = 'block';
             document.getElementById('techBlockOption').style.display = 'block';
             document.getElementById('bulkDeleteBtn').style.display = 'block';
+            // Bottom nav — показуємо кнопку налаштувань
+            const bnavSettings = document.getElementById('bnav-settings');
+            if (bnavSettings) bnavSettings.style.display = 'flex';
         }
+
+        // Bottom nav — показуємо тільки на мобільному
+        if (window.innerWidth < 768) {
+            document.getElementById('bottomNav').style.display = 'flex';
+        }
+
+        // Перебудова при зміні орієнтації
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (calendar) calendar.updateSize();
+                // Ховаємо/показуємо bottom nav
+                document.getElementById('bottomNav').style.display =
+                    window.innerWidth < 768 ? 'flex' : 'none';
+            }, 300);
+        });
+
+        // Те саме при resize (для планшету)
+        window.addEventListener('resize', () => {
+            if (calendar) calendar.updateSize();
+            document.getElementById('bottomNav').style.display =
+                window.innerWidth < 768 ? 'flex' : 'none';
+        });
 
         if (!calendar) initCalendar();
         loadData();
@@ -725,8 +753,35 @@ window.closeStatusModal = () => {
 };
 
 window.toggleSidebar = () => {
-    const s = document.querySelector('.sidebar');
-    s.style.display = (getComputedStyle(s).display === 'none') ? 'block' : 'none';
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const isOpen = sidebar.classList.contains('sidebar-open');
+    if (isOpen) {
+        closeSidebar();
+    } else {
+        sidebar.classList.add('sidebar-open');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+};
+
+window.closeSidebar = () => {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.remove('sidebar-open');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+};
+
+// Перейти на сьогодні в календарі (для bottom nav)
+window.scrollToToday = () => {
+    if (calendar) {
+        calendar.today();
+        // На мобільному — перемикаємо на денний вигляд
+        if (window.innerWidth < 768) {
+            calendar.changeView('timeGridDay');
+        }
+    }
 };
 
 function checkSlotAvailability(teacherName, newStart, newEnd) {

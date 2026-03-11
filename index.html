@@ -2,7 +2,11 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4F46E5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Liceum Manager v10.0 (Final)</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="/favicon.jpg">
@@ -68,10 +72,15 @@
 
 <div id="statusBar" style="display: none;"></div>
 
+<!-- Overlay для закриття сайдбару на мобільному -->
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <!-- =================== ГОЛОВНИЙ КОНТЕЙНЕР =================== -->
 <div class="container" id="mainApp" style="display: none;">
 
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
+    <!-- Кнопка закриття на мобільному -->
+    <button class="sidebar-close-btn" onclick="closeSidebar()">✕</button>
 
     <div class="sidebar-panel">
       <details>
@@ -383,7 +392,25 @@
   </div>
 </div>
 
-
+<!-- =================== BOTTOM NAV (тільки мобільний) =================== -->
+<nav class="bottom-nav" id="bottomNav" style="display:none;">
+  <button class="bottom-nav-item" onclick="scrollToToday()">
+    <span class="bnav-icon">📅</span>
+    <span class="bnav-label">Сьогодні</span>
+  </button>
+  <button class="bottom-nav-item" id="bnav-report" style="display:none;" onclick="openReport()">
+    <span class="bnav-icon">📊</span>
+    <span class="bnav-label">Звіт</span>
+  </button>
+  <button class="bottom-nav-item" id="bnav-settings" style="display:none;" onclick="openSettings()">
+    <span class="bnav-icon">⚙️</span>
+    <span class="bnav-label">Налаштування</span>
+  </button>
+  <button class="bottom-nav-item" onclick="toggleSidebar()">
+    <span class="bnav-icon">☰</span>
+    <span class="bnav-label">Меню</span>
+  </button>
+</nav>
 
 </body>
 </html>
