@@ -16,10 +16,43 @@
 
 <!-- =================== ЕКРАН ВХОДУ =================== -->
 <div id="loginScreen">
-  <div class="login-box">
+
+  <!-- Фонові декоративні кулі (splash анімація) -->
+  <div class="login-bg-blob blob-1"></div>
+  <div class="login-bg-blob blob-2"></div>
+  <div class="login-bg-blob blob-3"></div>
+
+  <div class="login-box" id="loginBox">
     <img src="logo.jpg" alt="Герб Ліцею" class="login-logo">
-    <input type="password" id="passInput" placeholder="Код доступу">
-    <button class="btn btn-primary" onclick="tryLogin()">Увійти</button>
+    <h2 class="login-title">Liceum Manager</h2>
+
+    <!-- Версія та дата оновлення -->
+    <div class="login-version">v10.0 &nbsp;·&nbsp; оновлено 11.03.2025</div>
+
+    <div class="login-input-wrap">
+      <input
+        type="password"
+        id="passInput"
+        placeholder="Код доступу"
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter') tryLogin()"
+        oninput="checkCapsLock(event)"
+        onkeyup="checkCapsLock(event)"
+      >
+      <!-- Кнопка показати/сховати пароль -->
+      <button class="login-eye-btn" onclick="togglePassVisibility()" title="Показати/сховати">
+        <span id="eyeIcon">👁</span>
+      </button>
+    </div>
+
+    <!-- Попередження про Caps Lock -->
+    <div id="capsLockWarning" class="caps-warning" style="display:none;">
+      ⇪ Caps Lock увімкнений
+    </div>
+
+    <button class="btn btn-primary login-btn" onclick="tryLogin()">
+      <span id="loginBtnText">Увійти</span>
+    </button>
   </div>
 </div>
 

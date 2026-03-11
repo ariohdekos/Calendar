@@ -7,25 +7,228 @@
   --bg-color: #F3F4F6;
 }
 
-body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-color); color: #1F2937; -webkit-tap-highlight-color: transparent; }
-
-/* Вхід */
-#loginScreen { position: fixed; inset: 0; background: #1F2937; display: flex; align-items: center; justify-content: center; z-index: 5000; }
-.login-box { background: white; padding: 40px; border-radius: 24px; width: 320px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
-.login-box h2 { margin-top: 0; color: #111827; }
-/* Стилі для герба на екрані входу */
-.login-logo {
-    width: 130px; /* Ширина герба (можете змінити, якщо треба більше/менше) */
-    height: auto;
-    margin: 0 auto 20px auto; /* Вирівнювання по центру та відступ знизу */
-    display: block;
-    filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.1)); /* Легка тінь для краси */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-color);
+  color: #1F2937;
+  -webkit-tap-highlight-color: transparent;
 }
-.login-box input { width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 20px; border: 2px solid #E5E7EB; border-radius: 12px; font-size: 16px; text-align: center; }
-.login-box .btn { width: 100%; }
 
-/* Панель керування */
-#topBar { position: fixed; top: 0; width: 100%; height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 2000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); box-sizing: border-box;}
+/* =========================================
+   ЕКРАН ВХОДУ — ОНОВЛЕНИЙ
+   ========================================= */
+
+#loginScreen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #4F46E5 0%, #10B981 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  overflow: hidden;
+}
+
+/* Анімовані фонові кулі (splash) */
+.login-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.15;
+  animation: blobFloat 6s ease-in-out infinite;
+  pointer-events: none;
+}
+.blob-1 {
+  width: 420px; height: 420px;
+  background: #fff;
+  top: -100px; left: -100px;
+  animation-delay: 0s;
+}
+.blob-2 {
+  width: 300px; height: 300px;
+  background: #fff;
+  bottom: -60px; right: -60px;
+  animation-delay: 2s;
+}
+.blob-3 {
+  width: 200px; height: 200px;
+  background: #a5f3fc;
+  bottom: 30%; right: 15%;
+  animation-delay: 4s;
+}
+
+@keyframes blobFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-20px) scale(1.04); }
+}
+
+/* Карточка входу */
+.login-box {
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.4);
+  padding: 44px 40px 36px;
+  border-radius: 28px;
+  width: 320px;
+  text-align: center;
+  box-shadow: 0 32px 64px -12px rgba(0,0,0,0.28);
+  position: relative;
+  z-index: 1;
+  /* Анімація появи */
+  animation: loginBoxIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes loginBoxIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.login-logo {
+  width: 100px;
+  height: auto;
+  margin: 0 auto 12px auto;
+  display: block;
+  filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.12));
+  animation: logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% { filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.12)); }
+  50%       { filter: drop-shadow(0px 6px 16px rgba(79,70,229,0.3)); }
+}
+
+.login-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.5px;
+}
+
+/* Версія і дата */
+.login-version {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-bottom: 24px;
+  letter-spacing: 0.3px;
+}
+
+/* Обгортка для input + кнопка eye */
+.login-input-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.login-input-wrap input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 44px 13px 16px;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  font-size: 16px;
+  text-align: center;
+  letter-spacing: 4px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+  outline: none;
+}
+
+.login-input-wrap input:focus {
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+}
+
+/* Кнопка показати/сховати пароль */
+.login-eye-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.login-eye-btn:hover { opacity: 1; }
+
+/* Попередження Caps Lock */
+.caps-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #B45309;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+  animation: warnIn 0.2s ease;
+}
+
+@keyframes warnIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Кнопка входу */
+.login-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+}
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79,70,229,0.35);
+}
+.login-btn:active { transform: translateY(0); }
+
+/* Анімація зникнення екрану входу */
+.login-fade-out {
+  animation: loginFadeOut 0.4s ease forwards;
+}
+@keyframes loginFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; pointer-events: none; }
+}
+
+/* Анімація появи основного додатку */
+.app-fade-in {
+  animation: appFadeIn 0.5s ease both;
+}
+@keyframes appFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   ПАНЕЛЬ КЕРУВАННЯ
+   ========================================= */
+#topBar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 60px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 2000;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-sizing: border-box;
+}
 .brand { font-weight: 800; font-size: 18px; color: #111827; letter-spacing: -0.5px; }
 .user-controls { display: flex; align-items: center; gap: 15px; }
 .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -62,180 +265,76 @@ input:focus, select:focus { border-color: #4F46E5; }
 .btn-light { background: #E0E7FF; color: #4F46E5; width: 100%; margin-top: 10px; }
 
 /* Модалки */
-.overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.7); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(4px); }
-.modern-modal { width: 420px !important; padding: 0 !important; overflow: hidden; border-radius: 20px !important; border: 1px solid rgba(0,0,0,0.05); background: white;}
+.overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.7); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(4px); }
+.modern-modal { width: 420px !important; padding: 0 !important; overflow: hidden; border-radius: 20px !important; border: 1px solid rgba(0,0,0,0.05); background: white; }
 .modal-header { padding: 20px 24px; background: #fcfcfd; border-bottom: 1px solid #f1f1f4; display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { margin: 0; font-size: 18px; }
-.modal-body { padding: 20px 24px;background: white; max-height: 70vh; overflow-y: auto;}
+.modal-body { padding: 20px 24px; background: white; max-height: 70vh; overflow-y: auto; }
 .modal-footer { padding: 16px 24px; background: #fcfcfd; border-top: 1px solid #f1f1f4; display: flex; gap: 12px; }
 
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
 .input-group { margin-bottom: 15px; }
 .input-group label { font-size: 12px; font-weight: 700; color: #4b5563; margin-bottom: 6px; display: block; }
-.compact-color { width: 40px; height: 40px; border-radius: 10px; cursor: pointer; }
 
 details { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; margin-bottom: 10px; }
 summary { padding: 12px 16px; font-weight: 600; cursor: pointer; list-style: none; outline: none; }
 summary::-webkit-details-marker { display: none; }
 .panel-content { padding: 0 16px 16px 16px; border-top: 1px solid #E5E7EB; margin-top: 8px; padding-top: 12px; }
 
-/* Адаптивність */
-@media (max-width: 768px) {
-  .container { grid-template-columns: 1fr; position: relative; }
-  .sidebar { display: none; background: white; width: 100%; } /* Приховано за замовчуванням */
-  .modern-modal { width: 90% !important; }
-  #mobileMenuBtn { display: inline-block; } /* Показуємо кнопку меню */
-}
+/* Звіт */
+.report-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+.report-table th, .report-table td { border: 1px solid #E5E7EB; padding: 12px; font-size: 14px; text-align: left; }
+.report-table th { background: #F9FAFB; font-weight: 700; color: #374151; }
 
-@media (min-width: 769px) {
-    #mobileMenuBtn { display: none; } /* Ховаємо кнопку меню на ПК */
-    .sidebar { display: block !important; }
-}
-/* Стилі звіту */
-.report-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: white;
-}
+/* SweetAlert поверх усього */
+.swal2-container { z-index: 10000 !important; }
 
-.report-table th, .report-table td {
-    border: 1px solid #E5E7EB;
-    padding: 12px;
-    font-size: 14px;
-    text-align: left;
-}
-
-.report-table th {
-    background: #F9FAFB;
-    font-weight: 700;
-    color: #374151;
-}
-
-.color-picker {
-    width: 35px;
-    height: 35px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.color-picker:hover { transform: scale(1.1); }
-
-/* Виводимо сповіщення SweetAlert2 на передній план */
-.swal2-container {
-    z-index: 10000 !important;
-}
-/* Стилі для меню налаштувань (Технік/Адмін) */
+/* Налаштування */
 .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.settings-card { background: #F3F4F6; padding: 20px; border-radius: 12px; border: 1px solid #E5E7EB; }
+.settings-card { background: #F3F4F6; padding: 20px; border-radius: 12px; border: 1px solid #E5E7EB; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.settings-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
 .settings-card h4 { margin: 0 0 15px 0; font-size: 1.1em; color: #1F2937; }
 
-/* Вирівнюємо поля і кнопки в один ідеальний рядок */
 .input-group-flex { display: flex; gap: 10px; margin-bottom: 15px; align-items: stretch; }
-
-/* Глушимо старі стилі, які ламали вигляд */
-.input-group-flex input { 
-    flex: 1; 
-    width: auto !important; 
-    margin: 0 !important; 
-    padding: 10px 15px !important; 
-    border: 1px solid #D1D5DB !important; 
-    border-radius: 8px !important; 
-    font-size: 14px;
-}
+.input-group-flex input { flex: 1; width: auto !important; margin: 0 !important; padding: 10px 15px !important; border: 1px solid #D1D5DB !important; border-radius: 8px !important; font-size: 14px; }
 .input-group-flex input:focus { border-color: var(--admin-color) !important; outline: none; }
+.input-group-flex button { margin: 0 !important; padding: 0 15px !important; width: auto !important; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2em; }
 
-/* Робимо кнопку ➕ акуратною і квадратною */
-.input-group-flex button { 
-    margin: 0 !important; 
-    padding: 0 15px !important; 
-    width: auto !important; 
-    border-radius: 8px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-size: 1.2em;
-}
-
-/* Робимо список красивими білими плашками */
 .settings-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
-.settings-list li { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    background: #FFFFFF;
-    padding: 10px 15px; 
-    margin-bottom: 8px;
-    border-radius: 8px;
-    border: 1px solid #E5E7EB; 
-    font-size: 0.95em; 
-    color: #374151;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
+.settings-list li { display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; padding: 10px 15px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #E5E7EB; font-size: 0.95em; color: #374151; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .settings-list li:last-child { margin-bottom: 0; }
+.settings-list li button { padding: 4px 8px !important; font-size: 12px !important; border-radius: 6px !important; width: auto !important; margin: 0 !important; }
 
-/* Кнопка видалення (хрестик) */
-.settings-list li button {
-    padding: 4px 8px !important;
-    font-size: 12px !important;
-    border-radius: 6px !important;
-    width: auto !important;
-    margin: 0 !important;
-}
+/* Sidebar panel */
+.sidebar-panel { margin-bottom: 10px; }
 
-/* На мобільних екранах робимо колонки одна під одною */
-@media (max-width: 768px) {
-    .settings-grid { grid-template-columns: 1fr; gap: 15px; }
-}
-/* =========================================
-   КРАСА ТА ДИЗАЙН (UI/UX ПОКРАЩЕННЯ)
-   ========================================= */
-
-/* 1. Сучасний екран входу (Градієнт + Скло) */
-#loginScreen { 
-    background: linear-gradient(135deg, #4F46E5 0%, #10B981 100%); 
-}
-.login-box { 
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-}
-
-/* 2. Кастомні тонкі скролбари для всіх вікон */
+/* Кастомні скролбари */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
 
-/* 3. Плаваючий ефект для карток у Налаштуваннях */
-.settings-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.settings-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+/* Живі кнопки */
+.btn { transition: all 0.2s ease-in-out; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); filter: brightness(1.05); }
+.btn:active { transform: translateY(0); box-shadow: none; }
+
+/* Календар */
+.fc { background: white; padding: 15px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+
+/* =========================================
+   АДАПТИВНІСТЬ
+   ========================================= */
+@media (max-width: 768px) {
+  .container { grid-template-columns: 1fr; position: relative; }
+  .sidebar { display: none; background: white; width: 100%; }
+  .modern-modal { width: 90% !important; }
+  #mobileMenuBtn { display: inline-block; }
+  .login-box { width: 88%; padding: 36px 24px 28px; }
+  .settings-grid { grid-template-columns: 1fr; gap: 15px; }
 }
 
-/* 4. Живі кнопки (мікроінтеракції при наведенні) */
-.btn {
-    transition: all 0.2s ease-in-out;
-}
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-    filter: brightness(1.05);
-}
-.btn:active {
-    transform: translateY(0);
-    box-shadow: none;
-}
-
-/* Трохи заокруглюємо сам календар для м'якості */
-.fc {
-    background: white;
-    padding: 15px;
-    border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+@media (min-width: 769px) {
+  #mobileMenuBtn { display: none; }
+  .sidebar { display: block !important; }
 }

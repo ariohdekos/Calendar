@@ -73,30 +73,84 @@ function checkAutoLogin() {
 
 window.logout = () => { sessionStorage.clear(); location.reload(); };
 
+// ==========================================
+// LOGIN HELPERS
+// ==========================================
+
+// Вхід по Enter вже вішається в HTML, але на всяк випадок — глобальний fallback
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+        tryLogin();
+    }
+});
+
+// Перевірка Caps Lock
+window.checkCapsLock = (e) => {
+    const warning = document.getElementById('capsLockWarning');
+    if (!warning) return;
+    // getModifierState доступний на keydown/keyup, на input — ні, тому перевіряємо символ
+    let capsOn = false;
+    if (e.getModifierState) {
+        capsOn = e.getModifierState('CapsLock');
+    } else if (e.type === 'input') {
+        // Запасний метод: якщо введена велика буква без Shift
+        const val = document.getElementById('passInput').value;
+        const last = val[val.length - 1];
+        if (last && last !== last.toLowerCase() && last === last.toUpperCase()) capsOn = true;
+    }
+    warning.style.display = capsOn ? 'flex' : 'none';
+};
+
+// Показати / сховати пароль
+window.togglePassVisibility = () => {
+    const input = document.getElementById('passInput');
+    const icon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        icon.textContent = '👁';
+    }
+    input.focus();
+};
+
 function startApp() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('topBar').style.display = 'flex';
-    document.getElementById('statusBar').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'grid';
+    // Плавна анімація зникнення екрану входу
+    const loginScreen = document.getElementById('loginScreen');
+    loginScreen.classList.add('login-fade-out');
 
-    document.getElementById('roleBadge').textContent = currentUser.role;
-    document.getElementById('roleBadge').style.background = currentUser.color;
+    setTimeout(() => {
+        loginScreen.style.display = 'none';
+        loginScreen.classList.remove('login-fade-out');
 
-    const statusBar = document.getElementById('statusBar');
-    statusBar.textContent = `Ви увійшли як: ${currentUser.role}`;
-    statusBar.style.background = currentUser.color;
+        document.getElementById('topBar').style.display = 'flex';
+        document.getElementById('statusBar').style.display = 'flex';
 
-    if (currentUser.level === 'admin' || currentUser.level === 'tech') {
-        document.getElementById('reportBtn').style.display = 'block';
-    }
-    if (currentUser.level === 'tech') {
-        document.getElementById('settingsBtn').style.display = 'block';
-        document.getElementById('techBlockOption').style.display = 'block';
-        document.getElementById('bulkDeleteBtn').style.display = 'block';
-    }
+        const mainApp = document.getElementById('mainApp');
+        mainApp.style.display = 'grid';
+        mainApp.classList.add('app-fade-in');
+        setTimeout(() => mainApp.classList.remove('app-fade-in'), 600);
 
-    if (!calendar) initCalendar();
-    loadData();
+        document.getElementById('roleBadge').textContent = currentUser.role;
+        document.getElementById('roleBadge').style.background = currentUser.color;
+
+        const statusBar = document.getElementById('statusBar');
+        statusBar.textContent = `Ви увійшли як: ${currentUser.role}`;
+        statusBar.style.background = currentUser.color;
+
+        if (currentUser.level === 'admin' || currentUser.level === 'tech') {
+            document.getElementById('reportBtn').style.display = 'block';
+        }
+        if (currentUser.level === 'tech') {
+            document.getElementById('settingsBtn').style.display = 'block';
+            document.getElementById('techBlockOption').style.display = 'block';
+            document.getElementById('bulkDeleteBtn').style.display = 'block';
+        }
+
+        if (!calendar) initCalendar();
+        loadData();
+    }, 400);
 }
 
 // ==========================================
