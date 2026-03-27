@@ -1,0 +1,19 @@
+# Firebase
+.firebase/
+firebase-debug.log*
+firebase-debug.*.log*
+
+# Середовище
+.env
+.env.local
+
+# Логи
+*.log
+logs/
+
+# Системні файли
+.DS_Store
+Thumbs.db
+
+# VS Code (опційно — залиш якщо хочеш шерити налаштування)
+# .vscode/
